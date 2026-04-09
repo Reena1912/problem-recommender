@@ -274,6 +274,12 @@ User: Seeing declining performance in specific areas
 - **Tags Analyzed**: 35+
 - **Output Formats**: JSON
 
+## What I Learned
+- Designing an ETL pipeline from a real-world API
+- Framing a personal frustration as a data problem
+- Building and serving an ML model end to end
+- Structuring a project for both local use and deployment
+
 ## Contributing
 
 Contributions welcome! Areas for improvement:
