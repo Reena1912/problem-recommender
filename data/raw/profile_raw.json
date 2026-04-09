@@ -1,0 +1,192 @@
+{
+  "data": {
+    "matchedUser": {
+      "submitStatsGlobal": {
+        "acSubmissionNum": [
+          {
+            "difficulty": "All",
+            "count": 169
+          },
+          {
+            "difficulty": "Easy",
+            "count": 103
+          },
+          {
+            "difficulty": "Medium",
+            "count": 63
+          },
+          {
+            "difficulty": "Hard",
+            "count": 3
+          }
+        ]
+      },
+      "tagProblemCounts": {
+        "advanced": [
+          {
+            "tagName": "Data Stream",
+            "problemsSolved": 1
+          },
+          {
+            "tagName": "Rolling Hash",
+            "problemsSolved": 1
+          },
+          {
+            "tagName": "Backtracking",
+            "problemsSolved": 1
+          },
+          {
+            "tagName": "Quickselect",
+            "problemsSolved": 1
+          },
+          {
+            "tagName": "Dynamic Programming",
+            "problemsSolved": 16
+          },
+          {
+            "tagName": "Divide and Conquer",
+            "problemsSolved": 4
+          },
+          {
+            "tagName": "Trie",
+            "problemsSolved": 1
+          },
+          {
+            "tagName": "Union-Find",
+            "problemsSolved": 2
+          },
+          {
+            "tagName": "Binary Indexed Tree",
+            "problemsSolved": 1
+          },
+          {
+            "tagName": "Segment Tree",
+            "problemsSolved": 1
+          },
+          {
+            "tagName": "Monotonic Stack",
+            "problemsSolved": 2
+          },
+          {
+            "tagName": "Monotonic Queue",
+            "problemsSolved": 1
+          }
+        ],
+        "intermediate": [
+          {
+            "tagName": "Hash Table",
+            "problemsSolved": 25
+          },
+          {
+            "tagName": "Ordered Set",
+            "problemsSolved": 1
+          },
+          {
+            "tagName": "Greedy",
+            "problemsSolved": 9
+          },
+          {
+            "tagName": "Binary Search",
+            "problemsSolved": 12
+          },
+          {
+            "tagName": "Depth-First Search",
+            "problemsSolved": 1
+          },
+          {
+            "tagName": "Breadth-First Search",
+            "problemsSolved": 2
+          },
+          {
+            "tagName": "Recursion",
+            "problemsSolved": 5
+          },
+          {
+            "tagName": "Sliding Window",
+            "problemsSolved": 9
+          },
+          {
+            "tagName": "Bit Manipulation",
+            "problemsSolved": 6
+          },
+          {
+            "tagName": "Math",
+            "problemsSolved": 29
+          },
+          {
+            "tagName": "Design",
+            "problemsSolved": 2
+          },
+          {
+            "tagName": "Brainteaser",
+            "problemsSolved": 2
+          },
+          {
+            "tagName": "Database",
+            "problemsSolved": 40
+          }
+        ],
+        "fundamental": [
+          {
+            "tagName": "Array",
+            "problemsSolved": 75
+          },
+          {
+            "tagName": "Matrix",
+            "problemsSolved": 3
+          },
+          {
+            "tagName": "String",
+            "problemsSolved": 35
+          },
+          {
+            "tagName": "Simulation",
+            "problemsSolved": 7
+          },
+          {
+            "tagName": "Enumeration",
+            "problemsSolved": 2
+          },
+          {
+            "tagName": "Sorting",
+            "problemsSolved": 23
+          },
+          {
+            "tagName": "Stack",
+            "problemsSolved": 8
+          },
+          {
+            "tagName": "Queue",
+            "problemsSolved": 2
+          },
+          {
+            "tagName": "Linked List",
+            "problemsSolved": 4
+          },
+          {
+            "tagName": "Two Pointers",
+            "problemsSolved": 31
+          }
+        ]
+      }
+    },
+    "allQuestionsCount": [
+      {
+        "difficulty": "All",
+        "count": 3893
+      },
+      {
+        "difficulty": "Easy",
+        "count": 935
+      },
+      {
+        "difficulty": "Medium",
+        "count": 2037
+      },
+      {
+        "difficulty": "Hard",
+        "count": 921
+      }
+    ]
+  }
+}

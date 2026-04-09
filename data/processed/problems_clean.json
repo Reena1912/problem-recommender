@@ -1,0 +1,156 @@
+{
+  "solve_counts": {
+    "All": 169,
+    "Easy": 103,
+    "Medium": 63,
+    "Hard": 3
+  },
+  "total_available": {
+    "All": 3892,
+    "Easy": 935,
+    "Medium": 2036,
+    "Hard": 921
+  },
+  "tags": [
+    {
+      "tag": "Array",
+      "solved": 75
+    },
+    {
+      "tag": "Matrix",
+      "solved": 3
+    },
+    {
+      "tag": "String",
+      "solved": 35
+    },
+    {
+      "tag": "Simulation",
+      "solved": 7
+    },
+    {
+      "tag": "Enumeration",
+      "solved": 2
+    },
+    {
+      "tag": "Sorting",
+      "solved": 23
+    },
+    {
+      "tag": "Stack",
+      "solved": 8
+    },
+    {
+      "tag": "Queue",
+      "solved": 2
+    },
+    {
+      "tag": "Linked List",
+      "solved": 4
+    },
+    {
+      "tag": "Two Pointers",
+      "solved": 31
+    },
+    {
+      "tag": "Hash Table",
+      "solved": 25
+    },
+    {
+      "tag": "Ordered Set",
+      "solved": 1
+    },
+    {
+      "tag": "Greedy",
+      "solved": 9
+    },
+    {
+      "tag": "Binary Search",
+      "solved": 12
+    },
+    {
+      "tag": "Depth-First Search",
+      "solved": 1
+    },
+    {
+      "tag": "Breadth-First Search",
+      "solved": 2
+    },
+    {
+      "tag": "Recursion",
+      "solved": 5
+    },
+    {
+      "tag": "Sliding Window",
+      "solved": 9
+    },
+    {
+      "tag": "Bit Manipulation",
+      "solved": 6
+    },
+    {
+      "tag": "Math",
+      "solved": 29
+    },
+    {
+      "tag": "Design",
+      "solved": 2
+    },
+    {
+      "tag": "Brainteaser",
+      "solved": 2
+    },
+    {
+      "tag": "Database",
+      "solved": 40
+    },
+    {
+      "tag": "Data Stream",
+      "solved": 1
+    },
+    {
+      "tag": "Rolling Hash",
+      "solved": 1
+    },
+    {
+      "tag": "Backtracking",
+      "solved": 1
+    },
+    {
+      "tag": "Quickselect",
+      "solved": 1
+    },
+    {
+      "tag": "Dynamic Programming",
+      "solved": 16
+    },
+    {
+      "tag": "Divide and Conquer",
+      "solved": 4
+    },
+    {
+      "tag": "Trie",
+      "solved": 1
+    },
+    {
+      "tag": "Union-Find",
+      "solved": 2
+    },
+    {
+      "tag": "Binary Indexed Tree",
+      "solved": 1
+    },
+    {
+      "tag": "Segment Tree",
+      "solved": 1
+    },
+    {
+      "tag": "Monotonic Stack",
+      "solved": 2
+    },
+    {
+      "tag": "Monotonic Queue",
+      "solved": 1
+    }
+  ]
+}

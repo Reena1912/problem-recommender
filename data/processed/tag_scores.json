@@ -1,0 +1,212 @@
+[
+  {
+    "tag": "Ordered Set",
+    "solved": 1,
+    "strength_score": 0.0133,
+    "weakness_score": 0.9867
+  },
+  {
+    "tag": "Depth-First Search",
+    "solved": 1,
+    "strength_score": 0.0133,
+    "weakness_score": 0.9867
+  },
+  {
+    "tag": "Data Stream",
+    "solved": 1,
+    "strength_score": 0.0133,
+    "weakness_score": 0.9867
+  },
+  {
+    "tag": "Rolling Hash",
+    "solved": 1,
+    "strength_score": 0.0133,
+    "weakness_score": 0.9867
+  },
+  {
+    "tag": "Backtracking",
+    "solved": 1,
+    "strength_score": 0.0133,
+    "weakness_score": 0.9867
+  },
+  {
+    "tag": "Quickselect",
+    "solved": 1,
+    "strength_score": 0.0133,
+    "weakness_score": 0.9867
+  },
+  {
+    "tag": "Trie",
+    "solved": 1,
+    "strength_score": 0.0133,
+    "weakness_score": 0.9867
+  },
+  {
+    "tag": "Binary Indexed Tree",
+    "solved": 1,
+    "strength_score": 0.0133,
+    "weakness_score": 0.9867
+  },
+  {
+    "tag": "Segment Tree",
+    "solved": 1,
+    "strength_score": 0.0133,
+    "weakness_score": 0.9867
+  },
+  {
+    "tag": "Monotonic Queue",
+    "solved": 1,
+    "strength_score": 0.0133,
+    "weakness_score": 0.9867
+  },
+  {
+    "tag": "Enumeration",
+    "solved": 2,
+    "strength_score": 0.0267,
+    "weakness_score": 0.9733
+  },
+  {
+    "tag": "Queue",
+    "solved": 2,
+    "strength_score": 0.0267,
+    "weakness_score": 0.9733
+  },
+  {
+    "tag": "Breadth-First Search",
+    "solved": 2,
+    "strength_score": 0.0267,
+    "weakness_score": 0.9733
+  },
+  {
+    "tag": "Design",
+    "solved": 2,
+    "strength_score": 0.0267,
+    "weakness_score": 0.9733
+  },
+  {
+    "tag": "Brainteaser",
+    "solved": 2,
+    "strength_score": 0.0267,
+    "weakness_score": 0.9733
+  },
+  {
+    "tag": "Union-Find",
+    "solved": 2,
+    "strength_score": 0.0267,
+    "weakness_score": 0.9733
+  },
+  {
+    "tag": "Monotonic Stack",
+    "solved": 2,
+    "strength_score": 0.0267,
+    "weakness_score": 0.9733
+  },
+  {
+    "tag": "Matrix",
+    "solved": 3,
+    "strength_score": 0.04,
+    "weakness_score": 0.96
+  },
+  {
+    "tag": "Linked List",
+    "solved": 4,
+    "strength_score": 0.0533,
+    "weakness_score": 0.9467
+  },
+  {
+    "tag": "Divide and Conquer",
+    "solved": 4,
+    "strength_score": 0.0533,
+    "weakness_score": 0.9467
+  },
+  {
+    "tag": "Recursion",
+    "solved": 5,
+    "strength_score": 0.0667,
+    "weakness_score": 0.9333
+  },
+  {
+    "tag": "Bit Manipulation",
+    "solved": 6,
+    "strength_score": 0.08,
+    "weakness_score": 0.92
+  },
+  {
+    "tag": "Simulation",
+    "solved": 7,
+    "strength_score": 0.0933,
+    "weakness_score": 0.9067
+  },
+  {
+    "tag": "Stack",
+    "solved": 8,
+    "strength_score": 0.1067,
+    "weakness_score": 0.8933
+  },
+  {
+    "tag": "Greedy",
+    "solved": 9,
+    "strength_score": 0.12,
+    "weakness_score": 0.88
+  },
+  {
+    "tag": "Sliding Window",
+    "solved": 9,
+    "strength_score": 0.12,
+    "weakness_score": 0.88
+  },
+  {
+    "tag": "Binary Search",
+    "solved": 12,
+    "strength_score": 0.16,
+    "weakness_score": 0.84
+  },
+  {
+    "tag": "Dynamic Programming",
+    "solved": 16,
+    "strength_score": 0.2133,
+    "weakness_score": 0.7867
+  },
+  {
+    "tag": "Sorting",
+    "solved": 23,
+    "strength_score": 0.3067,
+    "weakness_score": 0.6933
+  },
+  {
+    "tag": "Hash Table",
+    "solved": 25,
+    "strength_score": 0.3333,
+    "weakness_score": 0.6667
+  },
+  {
+    "tag": "Math",
+    "solved": 29,
+    "strength_score": 0.3867,
+    "weakness_score": 0.6133
+  },
+  {
+    "tag": "Two Pointers",
+    "solved": 31,
+    "strength_score": 0.4133,
+    "weakness_score": 0.5867
+  },
+  {
+    "tag": "String",
+    "solved": 35,
+    "strength_score": 0.4667,
+    "weakness_score": 0.5333
+  },
+  {
+    "tag": "Database",
+    "solved": 40,
+    "strength_score": 0.5333,
+    "weakness_score": 0.4667
+  },
+  {
+    "tag": "Array",
+    "solved": 75,
+    "strength_score": 1.0,
+    "weakness_score": 0.0
+  }
+]
