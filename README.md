@@ -306,9 +306,13 @@ MIT License - feel free to use in portfolio or commercial projects.
 Building this project taught me:
 
 ✅ **API Integration**: Working with GraphQL and REST principles
+
 ✅ **Data Engineering**: ETL pipeline design and data processing
+
 ✅ **Algorithm Design**: Scoring systems and ranking algorithms
+
 ✅ **Software Architecture**: Modular design and separation of concerns
+
 ✅ **Problem Solving**: Identifying real-world problems and engineering solutions
 
 ---
