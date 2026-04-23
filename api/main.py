@@ -11,7 +11,7 @@ FastAPI application entry point.
 import os
 import sys
 from contextlib import asynccontextmanager
-
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -49,10 +49,16 @@ app = FastAPI(
         "Recommends the best LeetCode problem for any user based on their weak areas. "
         "Pass ?username=<leetcode_username> to every endpoint."
     ),
+    
     version="2.0.0",
     lifespan=lifespan,
 )
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 from api.routes import router  # noqa: E402 (import after app is defined)
 app.include_router(router)
 

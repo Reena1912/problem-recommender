@@ -7,9 +7,10 @@ import streamlit as st
 import requests
 import plotly.graph_objects as go
 
-API_BASE = "http://127.0.0.1:8000"
+import os
+API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000")
 
-# Free dark coding image from Unsplash (no API key needed)
+
 HERO_BG = "https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=1600&q=80"
 
 st.set_page_config(
