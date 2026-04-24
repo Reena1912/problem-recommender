@@ -10,12 +10,12 @@ import plotly.graph_objects as go
 import os
 API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000")
 
-
+# Free dark coding image from Unsplash (no API key needed)
 HERO_BG = "https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=1600&q=80"
 
 st.set_page_config(
     page_title="LeetCode Recommender",
-    page_icon="",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -192,13 +192,21 @@ def api(ep: str, method="GET") -> dict | None:
         r = requests.post(url, timeout=120) if method == "POST" else requests.get(url, timeout=35)
         if r.status_code == 200:
             return r.json()
-        st.warning(f"⚠️ {r.json().get('detail', r.text)}")
+        # Safe error extraction — body may be empty or not JSON
+        try:
+            detail = r.json().get("detail", r.text)
+        except Exception:
+            detail = r.text or f"HTTP {r.status_code}"
+        st.warning(f"⚠️ {detail}")
         return None
     except requests.exceptions.ConnectionError:
-        st.error("❌ API not reachable — run: uvicorn api.main:app --reload --reload-dir api")
+        st.error("❌ API not reachable. Check that the API service is running and API_BASE is set correctly.")
         return None
     except requests.exceptions.Timeout:
-        st.error("⏱ Still loading — wait a moment and retry.")
+        st.error("⏱ Request timed out — the API may still be warming up (first load takes ~40 s). Refresh in a moment.")
+        return None
+    except Exception as e:
+        st.error(f"❌ Unexpected error: {e}")
         return None
 
 
@@ -209,7 +217,7 @@ def H(html: str): st.markdown(html, unsafe_allow_html=True)
 
 # ── NAV ───────────────────────────────────────────────────────────────────
 def render_nav():
-    H('<div class="lc-nav"><div class="lc-nav-logo">LeetCode<span>.</span>RECOMMENDER</div><div class="lc-nav-links"><span>Dashboard</span><span>Analytics</span><span>About</span></div><div class="lc-nav-cta">Get Started ●</div></div>')
+    H('<div class="lc-nav"><div class="lc-nav-logo">LC<span>.</span>RECOMMENDER</div><div class="lc-nav-links"><span>Dashboard</span><span>Analytics</span><span>About</span></div><div class="lc-nav-cta">Get Started ●</div></div>')
 
 
 # ── HERO ──────────────────────────────────────────────────────────────────
@@ -422,7 +430,7 @@ def render_refresh(username: str):
 
 # ── FOOTER ────────────────────────────────────────────────────────────────
 def render_footer():
-    H('<div class="lc-footer"><div class="lc-footer-logo">LC<span>.</span>RECOMMENDER</div><div class="lc-footer-copy">Data from LeetCode GraphQL API</div></div>')
+    H('<div class="lc-footer"><div class="lc-footer-logo">LC<span>.</span>RECOMMENDER</div><div class="lc-footer-copy">Data from LeetCode GraphQL API · Weakness-Score Ranking · Built with ⚡</div></div>')
 
 
 # ── MAIN ──────────────────────────────────────────────────────────────────
