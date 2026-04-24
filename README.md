@@ -1,326 +1,275 @@
-# LeetCode Problem Recommender System
+<div align="center">
 
-> An intelligent system that analyzes your LeetCode profile and recommends problems based on your skill gaps and learning patterns.
+# ⚡ LeetCode Recommender
 
-## Overview
+**Stop grinding blindly. Target your exact weak spots.**
 
-The LeetCode Problem Recommender System is a data-driven solution that bridges the gap between random problem selection and deliberate practice. By analyzing your solved problems, skill proficiency across different algorithmic domains, and performance metrics, it generates personalized recommendations to optimize your competitive programming growth.
+An intelligent, multi-user system that analyses any LeetCode profile and recommends the most impactful problem to solve next — backed by real data, not guesswork.
 
-**Key Features:**
-- 📊 **Intelligent Analytics**: Analyzes problem-solving patterns across 30+ algorithmic domains
-- 🎯 **Personalized Recommendations**: Targets skill gaps with precision-ranked problems
-- 📈 **Progress Tracking**: Monitors strengths and weaknesses over time
-- 🔗 **LeetCode Integration**: Direct API integration with LeetCode's GraphQL API
-- 📉 **Performance Metrics**: Difficulty distribution and success rate analysis
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.39-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-## Problem Statement
 
-Competitive programmers face a critical challenge: **which problems should I practice next?**
+[Live Demo](#) · [Report Bug] · [Request Feature]
 
-- Practicing randomly wastes valuable time
-- Most platforms lack personalized difficulty progression
-- Users struggle to identify and address skill gaps
-- Traditional learning paths don't adapt to individual progress
+</div>
 
-This system solves these problems through data-driven analysis and intelligent recommendations.
+---
 
-## Technical Architecture
+## 📌 What It Does
 
-### System Components
+Enter **any** LeetCode username and instantly get:
+
+- 🎯 **Top ranked problem recommendation** targeting your exact skill gaps
+- 📊 **Weakness map** — every tag scored from 0.0 (strongest) to 1.0 (weakest)
+- 📈 **Progress tracker** — Easy / Medium / Hard solved out of total
+- 🕸 **Skill radar** — visual snapshot across your top 8 practiced topics
+- 🔄 **One-click refresh** — re-fetch your latest LeetCode data anytime
+
+No login required on the dashboard. Just type a username and go.
+
+---
+
+## 🖼 Screenshots
+
+> Dashboard, stat cards, recommendation cards, and analytics charts.
+> ![Dashboard](images/Homepage.jpeg)
+> ![Username](images/Username.jpeg)
+> ![Recommendations](images/recommendation.jpeg)
+> ![Analytics](images/Analysis.jpeg)
+> ![Visulaization](images/visulaization.jpeg)
+  
+  
+> 
+> 
+
+---
+
+## 🏗 Architecture
 
 ```
-problem-recommender-system/
+leetcode-recommender/
+├── api/
+│   ├── main.py              # FastAPI app — loads 3000+ problems at startup
+│   ├── routes.py            # /recommend /stats /update endpoints
+│   ├── schemas.py           # Pydantic response models
+│   └── user_pipeline.py     # Per-user ETL + 10-min in-memory cache
+│
 ├── scraper/
-│   ├── fetch_profile.py      # LeetCode GraphQL API integration
-│   ├── parse_submissions.py   # Data normalization & cleaning
-│   ├── tag_analyzer.py        # Skill gap analysis engine
-│   └── __init__.py
-├── data/
-│   ├── raw/                   # Raw API responses
-│   └── processed/             # Analyzed datasets
-├── config.py                  # Configuration & credentials
-└── README.md
+│   ├── fetch_profile.py     # LeetCode GraphQL API integration
+│   ├── parse_submissions.py # Raw JSON → clean structured data
+│   └── tag_analyzer.py      # Weakness / strength scoring engine
+│
+├── model/
+│   ├── weakness_scorer.py   # Scores problems against user's weakness map
+│   ├── problem_ranker.py    # Ranks 3000+ unsolved problems per user
+│   └── train.py             # Generates model.pkl (optional offline mode)
+│
+├── dashboard.py             # Streamlit frontend — mobile responsive
+├── config.py                # Single place to read .env credentials
+├── requirements.txt         # Pinned dependencies
+├── .python-version          # Pins Python 3.11.9 for Render
+└── .env                     # Your credentials — never committed to Git
 ```
 
-### Data Pipeline
+### How a request flows
 
 ```
-1. Profile Fetching        2. Data Processing       3. Analysis & Ranking
-   • User statistics           • Normalize data          • Calculate metrics
-   • Solved problems           • Extract patterns        • Generate scores
-   • Problem catalog           • Enrich datasets         • Rank by weakness
+User types username in browser
+        ↓
+Streamlit calls  GET /recommend?username=X
+        ↓
+user_pipeline.run_pipeline()
+   ├─ Cache hit (< 10 min)?  →  return instantly
+   └─ Cache miss?
+        ├─ Fetch profile via LeetCode GraphQL
+        ├─ Parse & normalize tag data
+        ├─ Compute weakness scores per tag
+        └─ Rank 3000+ unsolved problems
+                ↓
+        JSON response → Dashboard renders UI
 ```
 
-## How It Works
+---
 
-### 1. **Profile Analysis** (`fetch_profile.py`)
-- Fetches user data via LeetCode's GraphQL API
-- Retrieves solved problems across all difficulty levels
-- Extracts tag-based problem counts (fundamental, intermediate, advanced)
-- Captures performance percentiles and submission statistics
+## ⚙️ Algorithm
 
-**Technical Details:**
-```python
-# GraphQL query for comprehensive user statistics
-- acSubmissionNum: Track solved counts by difficulty
-- tagProblemCounts: Analyze strengths across domains
-- problemsSolvedBeatsStats: Percentile performance
-```
-
-### 2. **Data Processing** (`parse_submissions.py`)
-- Normalizes raw API responses into structured formats
-- Extracts problem metadata (difficulty, tags, acceptance rate)
-- Aggregates statistics for computational analysis
-- Outputs clean JSON for downstream analysis
-
-### 3. **Intelligent Analysis** (`tag_analyzer.py`)
-
-The system calculates weakness scores to identify skill gaps:
+### Step 1 — Tag weakness scoring
 
 ```
-For each tag/domain:
-  strength_score = problems_solved / max_problems_solved_in_any_tag
-  weakness_score = 1 - strength_score (range: 0.0 to 1.0)
+strength_score = problems_solved_in_tag / max_solved_in_any_single_tag
+weakness_score = 1 - strength_score       (0.0 = strongest, 1.0 = never touched)
 ```
 
-**Example Output:**
+### Step 2 — Problem ranking
+
+```
+problem_score = average(weakness_score of all tags on that problem)
+```
+
+Every unsolved problem is scored and sorted. The top result = the problem most targeted at your blind spots.
+
+### Step 3 — Caching
+
+- **Problem catalog** (3000+ problems) — fetched once at startup, shared for all users.
+- **Per-user results** — cached 10 minutes. Repeated requests return instantly.
+
+---
+
+## 🚀 Running Locally
+
+### Prerequisites
+
+- Python 3.11+
+- A LeetCode account
+- Your LeetCode session cookie (see below)
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/Reena1912/leetcode-recommender.git
+cd leetcode-recommender
+
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+pip install -r requirements.txt
+```
+
+### 2. Get your session cookie
+
+1. Log into [leetcode.com](https://leetcode.com)
+2. Open DevTools → `F12` → **Application** → **Cookies** → `https://leetcode.com`
+3. Copy the value of **`LEETCODE_SESSION`**
+
+### 3. Create `.env`
+
+```env
+LEETCODE_SESSION=paste_your_session_cookie_here
+LEETCODE_USERNAME=your_leetcode_username
+```
+
+> `.env` is in `.gitignore` — it will never be committed.
+
+### 4. Start the API
+
+```bash
+uvicorn api.main:app --reload --reload-dir api
+```
+
+Wait for this before opening the app:
+
+```
+✓ 3000+ problems loaded
+INFO:     Application startup complete.
+```
+
+This takes ~30 seconds on first run — the server fetches the full problem catalog.
+
+### 5. Start the dashboard
+
+Open a second terminal:
+
+```bash
+streamlit run dashboard.py
+```
+
+Open [http://localhost:8501](http://localhost:8501), type any LeetCode username, click **Go →**.
+
+---
+
+## 🔌 API Reference
+
+All endpoints accept `?username=<leetcode_username>`. If omitted, falls back to `LEETCODE_USERNAME` in `.env`.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | API info and endpoint listing |
+| `GET` | `/recommend?username=X` | Top recommendation, any difficulty |
+| `GET` | `/recommend/easy?username=X` | Top Easy recommendation |
+| `GET` | `/recommend/medium?username=X` | Top Medium recommendation |
+| `GET` | `/recommend/hard?username=X` | Top Hard recommendation |
+| `GET` | `/stats?username=X` | Tag scores, solve counts, totals |
+| `POST` | `/update?username=X` | Force-refresh data for a user |
+| `GET` | `/docs` | Swagger interactive docs |
+
+### Sample response — `/recommend?username=neal_wu`
+
 ```json
 {
-  "tag": "Dynamic Programming",
-  "solved": 8,
-  "strength_score": 0.62,
-  "weakness_score": 0.38
+  "recommendation": {
+    "title": "Burst Balloons",
+    "titleSlug": "burst-balloons",
+    "difficulty": "Hard",
+    "acceptance_rate": 58.3,
+    "tags": ["Array", "Dynamic Programming", "Divide and Conquer"],
+    "weakness_score": 0.87,
+    "leetcode_url": "https://leetcode.com/problems/burst-balloons/"
+  },
+  "your_weakest_tags": ["Divide and Conquer", "Segment Tree", "Trie"],
+  "message": "Based on neal_wu's weak areas, start with this Hard problem."
 }
 ```
 
-Problems are ranked by weakness score—areas needing the most improvement surface first.
-
-## Installation & Setup
-
-### Prerequisites
-- Python 3.8+
-- LeetCode account (premium recommended for full API access)
-- Active LeetCode session
-
-### Setup Steps
-
-```bash
-# Clone repository
-git clone https://github.com/your-username/problem-recommender-system.git
-cd problem-recommender-system
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure credentials
-cp config.template.py config.py
-# Edit config.py with your LeetCode session cookie and username
-```
-
-### Configuration
-
-Create `config.py` with your LeetCode credentials:
-
-```python
-USERNAME = "your_leetcode_username"
-SESSION_COOKIE = "your_leetcode_session_cookie"  # From browser DevTools
-```
-
-To extract your session cookie:
-1. Log into LeetCode
-2. Open DevTools (F12) → Application → Cookies
-3. Find `LEETCODE_SESSION` cookie
-4. Copy the value to `config.py`
-
-## Usage
-
-### Basic Workflow
-
-```bash
-# Step 1: Fetch your profile and all problems
-cd scraper
-python fetch_profile.py
-
-# Step 2: Process raw data
-python parse_submissions.py
-
-# Step 3: Analyze patterns and generate recommendations
-python tag_analyzer.py
-```
-
-### Output Files
-
-- **`data/raw/profile_raw.json`**: Raw user profile from LeetCode
-- **`data/raw/all_problems_raw.json`**: Complete problem catalog
-- **`data/processed/problems_clean.json`**: Normalized problem statistics
-- **`data/processed/tag_scores.json`**: Ranked weakness scores (recommendations)
-
-### Example Output
-
-```
-Your weakest areas:
-  Interval Scheduling: weakness=0.89, solved=1
-  Greedy Algorithm: weakness=0.87, solved=2
-  Segment Tree: weakness=0.85, solved=2
-
-Your strongest areas:
-  Hash Table: weakness=0.10, solved=18
-  String: weakness=0.12, solved=17
-  Binary Search: weakness=0.18, solved=15
-```
-
-## Algorithm Details
-
-### Weakness Score Calculation
-
-The system uses **relative strength scoring** to provide meaningful recommendations:
-
-1. **Normalization**: All tags are normalized against the maximum performance
-   - Prevents bias toward quantity of problems
-   - Makes different tags comparable
-
-2. **Weakness Ranking**: Tags sorted by weakness score (descending)
-   - Highest weakness = greatest skill gap
-   - Provides clear learning priorities
-
-3. **Adaptive Recommendations**:
-   - Early stage learners: Focus on fundamental algorithms
-   - Intermediate: Target weak areas systematically
-   - Advanced: Deep dive into specialized domains
-
-## Key Features & Benefits
-
-| Feature | Benefit |
-|---------|---------|
-| **Personalized Analysis** | Every recommendation tailored to your profile |
-| **Data-Driven Insights** | Decisions based on your actual patterns, not assumptions |
-| **Competitive Edge** | Focus practice time on highest-impact areas |
-| **Progress Visibility** | Clear metrics showing improvement over time |
-| **Scalable Design** | Handles complete LeetCode problem catalog (3000+ problems) |
-
-## Example Use Cases
-
-### Scenario 1: Interview Preparation
-```
-User: Junior developer preparing for FAANG interviews
-→ System identifies weak areas in Trees, Graphs, DP
-→ Recommends medium-level problems in these domains
-→ Result: Targeted preparation 3x more efficient
-```
-
-### Scenario 2: Skill Development
-```
-User: Wants to master algorithms
-→ System tracks progress across all domains
-→ Identifies emerging weaknesses as skills improve
-→ Result: Continuous challenge progression
-```
-
-### Scenario 3: Pattern Recognition
-```
-User: Seeing declining performance in specific areas
-→ System reveals performance trends by tag
-→ Recommends focused practice sessions
-→ Result: Skill gaps identified and addressed early
-```
-
-## Technical Highlights
-
-### Performance Optimizations
-- **GraphQL Pagination**: Efficiently fetches 3000+ problems in batches of 100
-- **Lazy Data Processing**: Only processes relevant user data
-- **Indexed Lookups**: O(1) tag lookups using dictionaries
-
-### Code Quality
-- **Modular Design**: Each scraper handles a specific concern
-- **Error Handling**: Graceful failures with informative messages
-- **Type Safety**: Clear data structures using JSON schemas
-- **Reproducibility**: Deterministic output from same input
-
-### Data Integrity
-- **API Validation**: Checks response status and data structure
-- **State Management**: Serialization prevents data loss
-- **Version Control**: Git tracking of all analysis outputs
-
-## Future Enhancements
-
-- [ ] **ML-Based Recommendations**: ML model predicting success probability for each problem
-- [ ] **Time Estimation**: Predict solution time based on historical attempts
-- [ ] **Difficulty Calibration**: Auto-adjust difficulty based on success rates
-- [ ] **Contest Simulation**: Generate practice contests from weak areas
-- [ ] **Peer Comparison**: Benchmark against similar skill levels
-- [ ] **Mobile App**: iOS/Android companion for on-the-go practice
-- [ ] **Web Dashboard**: Real-time analytics and interactive recommendations
-- [ ] **Multi-Platform Support**: Expand to CodeForces, Codeium, HackerEarth
-
-## Technology Stack
-
-- **Language**: Python 3.8+
-- **API Integration**: GraphQL (LeetCode API)
-- **HTTP Client**: requests
-- **Data Format**: JSON
-- **Environment**: Virtual Environment (venv)
-
-## Project Metrics
-
-- **Lines of Code**: 300+
-- **Time to Fetch Profile**: ~5-10 seconds
-- **Time to Analyze**: <1 second
-- **Problems Analyzed**: 3000+
-- **Tags Analyzed**: 35+
-- **Output Formats**: JSON
-
-## What I Learned
-- Designing an ETL pipeline from a real-world API
-- Framing a personal frustration as a data problem
-- Building and serving an ML model end to end
-- Structuring a project for both local use and deployment
-
-## Contributing
-
-Contributions welcome! Areas for improvement:
-
-1. **Algorithm Enhancements**: Better ranking algorithms
-2. **Feature Additions**: New analysis metrics
-3. **Documentation**: Additional examples and guides
-4. **Performance**: Optimize for larger datasets
-5. **Testing**: Unit tests for critical functions
-
-## License
-
-MIT License - feel free to use in portfolio or commercial projects.
-
-## Author
-
-**Reena**
+---
 
 
-## Contact & Support
+## 📁 Key Files
 
-- **GitHub**: https://github.com/Reena1912
-- **LinkedIn**: https://www.linkedin.com/in/k-reena-0aa37b244/
-- **Questions?** Open an issue on GitHub or contact directly
+| File | What it does |
+|------|-------------|
+| `api/user_pipeline.py` | Orchestrates the full ETL for any username. Manages TTL cache. |
+| `api/routes.py` | All HTTP endpoints. Every route accepts `?username=` for multi-user support. |
+| `scraper/fetch_profile.py` | Pure functions — `fetch_user_profile_data(username, cookie)`. No side effects, no file writes. |
+| `scraper/tag_analyzer.py` | `compute_tag_scores(tags)` — pure function. Input: tag list. Output: sorted weakness scores. |
+| `model/weakness_scorer.py` | Scores a problem by averaging weakness scores across its tags. Unknown tags default to `0.5`. |
+| `dashboard.py` | Streamlit frontend. Username in session state. All API calls pass `?username=`. |
+| `config.py` | Only file that reads `.env`. All other files import from here. |
+| `.python-version` | Pins Python 3.11.9 on Render. Required — do not delete. |
 
 ---
 
-## Learning Outcomes
+## 🛠 Tech Stack
 
-Building this project taught me:
-
-✅ **API Integration**: Working with GraphQL and REST principles
-
-✅ **Data Engineering**: ETL pipeline design and data processing
-
-✅ **Algorithm Design**: Scoring systems and ranking algorithms
-
-✅ **Software Architecture**: Modular design and separation of concerns
-
-✅ **Problem Solving**: Identifying real-world problems and engineering solutions
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Streamlit + Plotly + Custom CSS (Bebas Neue, Inter) |
+| Backend | FastAPI + Uvicorn |
+| Data source | LeetCode GraphQL API |
+| Caching | In-process dict with 10-min TTL |
+| Validation | Pydantic v2 |
+| Hosting | Render (two Web Services) |
 
 ---
 
-**Ready to optimize your competitive programming journey?** Start by following the [Installation & Setup](#installation--setup) guide above.
+## 📈 Roadmap
+
+- [ ] Spaced repetition — resurface weak tags untouched for 14+ days
+- [ ] Daily challenge mode — one problem per day + streak counter
+- [ ] Friend comparison — side-by-side radar for two usernames
+- [ ] AI study plan — day-by-day plan from weakness map + interview date
+- [ ] Contest rating graph
+- [ ] GitHub-style solve heatmap calendar
+
+---
+
+## 📄 License
+
+MIT — free for personal use, portfolios, and commercial projects.
+
+---
+
+## 👩‍💻 Author
+
+**Reena K**
+
+[![GitHub](https://img.shields.io/badge/GitHub-Reena1912-181717?style=flat-square&logo=github)](https://github.com/Reena1912)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-k--reena-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/k-reena-0aa37b244/)
+
+---
+
+<div align="center">
+  <sub>Built with ⚡ · LeetCode GraphQL API · Weakness-score ranking · Mobile ready</sub>
+</div>
