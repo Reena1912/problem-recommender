@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ LeetCode Recommender
+#  LeetCode Recommender
 
 **Stop grinding blindly. Target your exact weak spots.**
 
@@ -18,15 +18,15 @@ An intelligent, multi-user system that analyses any LeetCode profile and recomme
 
 ---
 
-## 📌 What It Does
+##  What It Does
 
 Enter **any** LeetCode username and instantly get:
 
-- 🎯 **Top ranked problem recommendation** targeting your exact skill gaps
-- 📊 **Weakness map** — every tag scored from 0.0 (strongest) to 1.0 (weakest)
-- 📈 **Progress tracker** — Easy / Medium / Hard solved out of total
-- 🕸 **Skill radar** — visual snapshot across your top 8 practiced topics
-- 🔄 **One-click refresh** — re-fetch your latest LeetCode data anytime
+-  **Top ranked problem recommendation** targeting your exact skill gaps.
+-  **Weakness map** — every tag scored from 0.0 (strongest) to 1.0 (weakest).
+-  **Progress tracker** — Easy / Medium / Hard solved out of total.
+-  **Skill radar** — visual snapshot across your top 8 practiced topics.
+-  **One-click refresh** — re-fetch your latest LeetCode data anytime.
 
 No login required on the dashboard. Just type a username and go.
 
@@ -47,7 +47,7 @@ No login required on the dashboard. Just type a username and go.
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ```
 leetcode-recommender/
@@ -118,7 +118,7 @@ Every unsolved problem is scored and sorted. The top result = the problem most t
 
 ---
 
-## 🚀 Running Locally
+##  Running Locally
 
 ### Prerequisites
 
@@ -216,7 +216,7 @@ All endpoints accept `?username=<leetcode_username>`. If omitted, falls back to 
 ---
 
 
-## 📁 Key Files
+## 📁Key Files
 
 | File | What it does |
 |------|-------------|
@@ -231,7 +231,7 @@ All endpoints accept `?username=<leetcode_username>`. If omitted, falls back to 
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -244,7 +244,7 @@ All endpoints accept `?username=<leetcode_username>`. If omitted, falls back to 
 
 ---
 
-## 📈 Roadmap
+##  Roadmap
 
 - [ ] Spaced repetition — resurface weak tags untouched for 14+ days
 - [ ] Daily challenge mode — one problem per day + streak counter
@@ -255,15 +255,12 @@ All endpoints accept `?username=<leetcode_username>`. If omitted, falls back to 
 
 ---
 
-## 📄 License
+## License
 
 MIT — free for personal use, portfolios, and commercial projects.
 
 ---
 
-## 👩‍💻 Author
-
-**Reena K**
 
 [![GitHub](https://img.shields.io/badge/GitHub-Reena1912-181717?style=flat-square&logo=github)](https://github.com/Reena1912)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-k--reena-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/k-reena-0aa37b244/)
