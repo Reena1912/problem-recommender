@@ -244,14 +244,13 @@ All endpoints accept `?username=<leetcode_username>`. If omitted, falls back to 
 
 ---
 
-##  Roadmap
+##  To be Implemented
 
 - [ ] Spaced repetition — resurface weak tags untouched for 14+ days
 - [ ] Daily challenge mode — one problem per day + streak counter
 - [ ] Friend comparison — side-by-side radar for two usernames
 - [ ] AI study plan — day-by-day plan from weakness map + interview date
-- [ ] Contest rating graph
-- [ ] GitHub-style solve heatmap calendar
+
 
 ---
 
