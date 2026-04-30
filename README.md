@@ -11,12 +11,17 @@ An intelligent, multi-user system that analyses any LeetCode profile and recomme
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.39-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-
-[Live Demo](https://problem-recommender.onrender.com/) · [Report Bug] · [Request Feature]
-
+**[🚀 Live Demo](https://problem-recommender.onrender.com/)** &nbsp;|&nbsp; **[📖 API Docs](https://leetcode-recommender-api.onrender.com/docs)**
+ 
+> If the main interface is loading, interact with the API directly — go to API Docs → **Recommend** → **Try it out** → enter any LeetCode username → **Execute**.
+ 
 </div>
 
 ---
+
+
+
+
 
 ##  What It Does
 
