@@ -15,7 +15,7 @@ def _get_client():
     if _client is None:
         url = os.getenv("SUPABASE_URL")
         # Use service_role key — bypasses RLS so the backend has full access.
-        # NEVER expose this key in the browser or frontend code.
+        
         key = os.getenv("SUPABASE_SERVICE_KEY")
         if not url or not key:
             return None

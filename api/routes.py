@@ -198,3 +198,67 @@ def admin_single_user(username: str, secret: str = Query(description="Admin secr
     if not user:
         raise HTTPException(status_code=404, detail=f"No data found for '{username}'.")
     return user
+
+@router.get("/admin/debug")
+def admin_debug(secret: str = Query()):
+    expected = os.getenv("ADMIN_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=403, detail="Invalid secret.")
+
+    result = {
+        "env_vars": {
+            "SUPABASE_URL_set":          bool(os.getenv("SUPABASE_URL")),
+            "SUPABASE_SERVICE_KEY_set":  bool(os.getenv("SUPABASE_SERVICE_KEY")),
+            "ADMIN_SECRET_set":          bool(os.getenv("ADMIN_SECRET")),
+        },
+        "supabase_import": None,
+        "supabase_connect": None,
+        "supabase_query": None,
+        "tracker_log_test": None,
+        "error": None,
+    }
+
+    # Step 1 — can we import supabase?
+    try:
+        from supabase import create_client
+        result["supabase_import"] = "OK"
+    except Exception as e:
+        result["supabase_import"] = f"FAILED: {e}"
+        result["error"] = "supabase package not installed"
+        return result
+
+    # Step 2 — can we connect?
+    try:
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_SERVICE_KEY")
+        client = create_client(url, key)
+        result["supabase_connect"] = "OK"
+    except Exception as e:
+        result["supabase_connect"] = f"FAILED: {e}"
+        result["error"] = "Bad URL or SERVICE_KEY"
+        return result
+
+    # Step 3 — can we query the users table?
+    try:
+        res = client.table("users").select("count", count="exact").execute()
+        result["supabase_query"] = f"OK — {res.count} rows in users table"
+    except Exception as e:
+        result["supabase_query"] = f"FAILED: {e}"
+        result["error"] = "Table doesnt exist or RLS is blocking service_role (unusual)"
+        return result
+
+    # Step 4 — does tracker.log_user work end to end?
+    try:
+        from api.tracker import log_user
+        log_user("__debug_test__", {
+            "solve_counts":    {"All": 0, "Easy": 0, "Medium": 0, "Hard": 0},
+            "total_available": {"All": 0, "Easy": 0, "Medium": 0, "Hard": 0},
+            "tag_scores":      [],
+            "ranked_problems": [],
+        })
+        result["tracker_log_test"] = "OK — test row written"
+    except Exception as e:
+        result["tracker_log_test"] = f"FAILED: {e}"
+        result["error"] = "tracker.log_user threw an exception"
+
+    return result
