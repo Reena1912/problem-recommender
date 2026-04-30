@@ -43,10 +43,11 @@ def _resolve_username(username: str | None) -> str:
 
 
 def _get_user_data(request: Request, username: str) -> dict:
+    """Run the pipeline for the given user, raising HTTP errors on failure."""
     try:
+        from api.tracker import log_user
         data = run_pipeline(username, request.app.state.all_problems, SESSION_COOKIE)
-        # ── Track every successful fetch ──────────────────────────────────
-        log_user(username, data)
+        log_user(username, data)   # ← saves user to Supabase
         return data
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
