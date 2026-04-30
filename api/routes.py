@@ -290,3 +290,11 @@ def admin_test_write(secret: str = Query()):
         "write_data": write.data,
         "read_back":  read.data,
     }
+    
+    @router.get("/admin/tracker-status")
+def tracker_status(secret: str = Query()):
+    expected = os.getenv("ADMIN_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=403, detail="Invalid secret.")
+    from api.tracker import get_last_error
+    return {"last_tracker_error": get_last_error()}

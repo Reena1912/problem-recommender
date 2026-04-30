@@ -1,100 +1,94 @@
 """
+api/tracker.py
 
 Saves every user's LeetCode username + full stats to Supabase.
-Never raises — analytics must never crash the main app.
+Uses service_role key which bypasses RLS.
 """
 
 import os
 from datetime import datetime, timezone
 
-_client = None
+_last_error: str = "none"   # readable via /admin/tracker-status
 
 
-def _get_client():
-    global _client
-    if _client is None:
-        url = os.getenv("SUPABASE_URL")
-        # Use service_role key — bypasses RLS so the backend has full access.
-        
-        key = os.getenv("SUPABASE_SERVICE_KEY")
-        if not url or not key:
-            return None
-        from supabase import create_client
-        _client = create_client(url, key)
-    return _client
+def _make_client():
+    """Create a fresh Supabase client — not cached, avoids stale state."""
+    url = os.getenv("SUPABASE_URL", "").strip()
+    key = os.getenv("SUPABASE_SERVICE_KEY", "").strip()
+    if not url or not key:
+        return None
+    from supabase import create_client
+    return create_client(url, key)
 
 
 def log_user(username: str, pipeline_result: dict) -> None:
+    global _last_error
     try:
-        client = _get_client()
+        client = _make_client()
         if client is None:
+            _last_error = "SUPABASE_URL or SUPABASE_SERVICE_KEY not set"
+            print(f"[tracker] {_last_error}")
             return
 
-        sc  = pipeline_result.get("solve_counts", {})
-        ta  = pipeline_result.get("total_available", {})
-        ts  = pipeline_result.get("tag_scores", [])
+        sc = pipeline_result.get("solve_counts", {})
+        ta = pipeline_result.get("total_available", {})
+        ts = pipeline_result.get("tag_scores", [])
 
-        weakest   = [t["tag"] for t in ts[:5]]
-        strongest = [t["tag"] for t in reversed(ts[-5:])]
+        # Convert to plain lists of strings (safe for Postgres TEXT[] columns)
+        weakest   = [str(t["tag"]) for t in ts[:5]]
+        strongest = [str(t["tag"]) for t in reversed(ts[-5:])]
+
+        top = None
+        if pipeline_result.get("ranked_problems"):
+            top = pipeline_result["ranked_problems"][0]["title"]
 
         row = {
             "username":           username,
             "last_seen":          datetime.now(timezone.utc).isoformat(),
-            "solved_total":       sc.get("All",    0),
-            "solved_easy":        sc.get("Easy",   0),
-            "solved_medium":      sc.get("Medium", 0),
-            "solved_hard":        sc.get("Hard",   0),
-            "total_easy":         ta.get("Easy",   0),
-            "total_medium":       ta.get("Medium", 0),
-            "total_hard":         ta.get("Hard",   0),
+            "solved_total":       int(sc.get("All",    0)),
+            "solved_easy":        int(sc.get("Easy",   0)),
+            "solved_medium":      int(sc.get("Medium", 0)),
+            "solved_hard":        int(sc.get("Hard",   0)),
+            "total_easy":         int(ta.get("Easy",   0)),
+            "total_medium":       int(ta.get("Medium", 0)),
+            "total_hard":         int(ta.get("Hard",   0)),
             "weakest_tags":       weakest,
             "strongest_tags":     strongest,
-            "top_recommendation": (
-                pipeline_result["ranked_problems"][0]["title"]
-                if pipeline_result.get("ranked_problems") else None
-            ),
+            "top_recommendation": top,
         }
 
-        # v2.x upsert — on_conflict is defined by the UNIQUE constraint
-        # on the username column in the DB, no need to pass it here
-        client.table("users").upsert(row).execute()
+        res = client.table("users").upsert(row).execute()
+        _last_error = "none"
+        print(f"[tracker] OK — logged '{username}'  rows={len(res.data)}")
 
     except Exception as e:
-        print(f"[tracker] Non-fatal error logging user '{username}': {e}")
+        _last_error = str(e)
+        print(f"[tracker] FAILED for '{username}': {e}")
 
 
 def get_all_users() -> list[dict]:
-    """Return all tracked users, newest first."""
     try:
-        client = _get_client()
+        client = _make_client()
         if client is None:
             return []
-        res = (
-            client.table("users")
-            .select("*")
-            .order("last_seen", desc=True)
-            .execute()
-        )
+        res = client.table("users").select("*").order("last_seen", desc=True).execute()
         return res.data or []
     except Exception as e:
-        print(f"[tracker] Could not fetch users: {e}")
+        print(f"[tracker] get_all_users failed: {e}")
         return []
 
 
 def get_user(username: str) -> dict | None:
-    """Return a single user's saved stats."""
     try:
-        client = _get_client()
+        client = _make_client()
         if client is None:
             return None
-        res = (
-            client.table("users")
-            .select("*")
-            .eq("username", username)
-            .limit(1)
-            .execute()
-        )
+        res = client.table("users").select("*").eq("username", username).limit(1).execute()
         return res.data[0] if res.data else None
     except Exception as e:
-        print(f"[tracker] Could not fetch user '{username}': {e}")
+        print(f"[tracker] get_user failed: {e}")
         return None
+
+
+def get_last_error() -> str:
+    return _last_error
