@@ -291,7 +291,8 @@ def admin_test_write(secret: str = Query()):
         "read_back":  read.data,
     }
     
-    @router.get("/admin/tracker-status")
+    
+@router.get("/admin/tracker-status")
 def tracker_status(secret: str = Query()):
     expected = os.getenv("ADMIN_SECRET", "")
     if not expected or secret != expected:
