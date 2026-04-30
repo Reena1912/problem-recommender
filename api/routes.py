@@ -263,3 +263,30 @@ def admin_debug(secret: str = Query()):
         result["error"] = "tracker.log_user threw an exception"
 
     return result
+@router.get("/admin/test-write")
+def admin_test_write(secret: str = Query()):
+    expected = os.getenv("ADMIN_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=403, detail="Invalid secret.")
+
+    from supabase import create_client
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_SERVICE_KEY")
+    client = create_client(url, key)
+
+    # Write — no try/except so the real error surfaces
+    write = client.table("users").upsert({
+        "username":           "__test__",
+        "solved_total":       1,
+        "weakest_tags":       ["Array"],
+        "strongest_tags":     ["HashMap"],
+        "top_recommendation": "Two Sum"
+    }, on_conflict="username").execute()
+
+    # Read it back to confirm
+    read = client.table("users").select("*").eq("username", "__test__").execute()
+
+    return {
+        "write_data": write.data,
+        "read_back":  read.data,
+    }
