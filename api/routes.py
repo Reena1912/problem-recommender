@@ -1,5 +1,4 @@
 """
-API routes.
 
 Every endpoint accepts an optional `username` query parameter.
 When provided, the full scrape → analyse → rank pipeline runs for that user
@@ -23,6 +22,7 @@ from api.schemas import (
     UserStatsResponse,
 )
 from api.user_pipeline import run_pipeline
+from api.tracker import log_user, get_all_users, get_user   # ← new
 
 router = APIRouter()
 
@@ -30,7 +30,6 @@ router = APIRouter()
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 def _resolve_username(username: str | None) -> str:
-    """Use the query-param username, falling back to the env default."""
     resolved = (username or "").strip() or USERNAME
     if not resolved:
         raise HTTPException(
@@ -44,9 +43,11 @@ def _resolve_username(username: str | None) -> str:
 
 
 def _get_user_data(request: Request, username: str) -> dict:
-    """Run the pipeline for the given user, raising HTTP errors on failure."""
     try:
-        return run_pipeline(username, request.app.state.all_problems, SESSION_COOKIE)
+        data = run_pipeline(username, request.app.state.all_problems, SESSION_COOKIE)
+        # ── Track every successful fetch ──────────────────────────────────
+        log_user(username, data)
+        return data
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -71,7 +72,7 @@ def _top_weak_tags(weakness_map: dict, n: int = 3) -> list[str]:
     ]
 
 
-# ── Endpoints ──────────────────────────────────────────────────────────────
+# ── Main Endpoints ─────────────────────────────────────────────────────────
 
 @router.get("/recommend", response_model=RecommendationResponse)
 def recommend(
@@ -133,10 +134,6 @@ def stats(
     request: Request,
     username: str | None = Query(default=None, description="LeetCode username"),
 ):
-    """
-    Returns tag scores, solve counts, and totals needed by the dashboard charts.
-    Eliminates the need for the dashboard to read local JSON files.
-    """
     user = _resolve_username(username)
     data = _get_user_data(request, user)
 
@@ -153,14 +150,10 @@ def update(
     request: Request,
     username: str | None = Query(default=None, description="LeetCode username"),
 ):
-    """
-    Force a cache refresh for a user (bypasses the 10-minute TTL).
-    Useful after solving new problems.
-    """
-    from api.user_pipeline import _cache  # clear the specific user entry
+    from api.user_pipeline import _cache
 
     user = _resolve_username(username)
-    _cache.pop(user, None)  # invalidate so run_pipeline re-fetches
+    _cache.pop(user, None)
 
     data = _get_user_data(request, user)
     top = data["ranked_problems"][0] if data["ranked_problems"] else None
@@ -170,3 +163,38 @@ def update(
         message=f"Data refreshed for user '{user}'.",
         top_recommendation=top["title"] if top else None,
     )
+
+
+# ── Admin Endpoints ────────────────────────────────────────────────────────
+
+@router.get("/admin/users")
+def admin_all_users(secret: str = Query(description="Admin secret key")):
+    """
+    Returns every user who has ever used the app.
+    Requires ?secret=<ADMIN_SECRET> (set this in your .env / Render env vars).
+    """
+    expected = os.getenv("ADMIN_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=403, detail="Invalid or missing admin secret.")
+
+    users = get_all_users()
+    return {
+        "total_users": len(users),
+        "users": users,
+    }
+
+
+@router.get("/admin/users/{username}")
+def admin_single_user(username: str, secret: str = Query(description="Admin secret key")):
+    """
+    Returns saved stats for a specific LeetCode username.
+    Requires ?secret=<ADMIN_SECRET>.
+    """
+    expected = os.getenv("ADMIN_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=403, detail="Invalid or missing admin secret.")
+
+    user = get_user(username)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"No data found for '{username}'.")
+    return user

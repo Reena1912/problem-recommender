@@ -12,3 +12,4 @@ httpx
 streamlit
 plotly
 requests
+supabase
