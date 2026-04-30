@@ -25,10 +25,6 @@ def _get_client():
 
 
 def log_user(username: str, pipeline_result: dict) -> None:
-    """
-    Upsert one row per username so you always have their latest stats.
-    Called automatically after every successful pipeline run.
-    """
     try:
         client = _get_client()
         if client is None:
@@ -38,30 +34,30 @@ def log_user(username: str, pipeline_result: dict) -> None:
         ta  = pipeline_result.get("total_available", {})
         ts  = pipeline_result.get("tag_scores", [])
 
-        # Top 5 weakest & strongest tags
         weakest   = [t["tag"] for t in ts[:5]]
         strongest = [t["tag"] for t in reversed(ts[-5:])]
 
         row = {
-            "username":        username,
-            "last_seen":       datetime.now(timezone.utc).isoformat(),
-            "solved_total":    sc.get("All",    0),
-            "solved_easy":     sc.get("Easy",   0),
-            "solved_medium":   sc.get("Medium", 0),
-            "solved_hard":     sc.get("Hard",   0),
-            "total_easy":      ta.get("Easy",   0),
-            "total_medium":    ta.get("Medium", 0),
-            "total_hard":      ta.get("Hard",   0),
-            "weakest_tags":    weakest,
-            "strongest_tags":  strongest,
+            "username":           username,
+            "last_seen":          datetime.now(timezone.utc).isoformat(),
+            "solved_total":       sc.get("All",    0),
+            "solved_easy":        sc.get("Easy",   0),
+            "solved_medium":      sc.get("Medium", 0),
+            "solved_hard":        sc.get("Hard",   0),
+            "total_easy":         ta.get("Easy",   0),
+            "total_medium":       ta.get("Medium", 0),
+            "total_hard":         ta.get("Hard",   0),
+            "weakest_tags":       weakest,
+            "strongest_tags":     strongest,
             "top_recommendation": (
                 pipeline_result["ranked_problems"][0]["title"]
                 if pipeline_result.get("ranked_problems") else None
             ),
         }
 
-        # upsert — insert on first visit, update on repeat visits
-        client.table("users").upsert(row, on_conflict="username").execute()
+        # v2.x upsert — on_conflict is defined by the UNIQUE constraint
+        # on the username column in the DB, no need to pass it here
+        client.table("users").upsert(row).execute()
 
     except Exception as e:
         print(f"[tracker] Non-fatal error logging user '{username}': {e}")
