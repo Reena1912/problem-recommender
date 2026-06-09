@@ -20,28 +20,3 @@ def compute_tag_scores(tags: list) -> list:
 
     scored.sort(key=lambda x: x["weakness_score"], reverse=True)
     return scored
-
-
-def analyze_tags():
-    with open("data/processed/problems_clean.json", "r") as f:
-        data = json.load(f)
-
-    tag_scores = compute_tag_scores(data["tags"])
-
-    os.makedirs("data/processed", exist_ok=True)
-    with open("data/processed/tag_scores.json", "w") as f:
-        json.dump(tag_scores, f, indent=2)
-
-    print("\nYour weakest areas:")
-    for t in tag_scores[:5]:
-        print(f"  {t['tag']}: weakness={t['weakness_score']}, solved={t['solved']}")
-
-    print("\nYour strongest areas:")
-    for t in tag_scores[-5:]:
-        print(f"  {t['tag']}: weakness={t['weakness_score']}, solved={t['solved']}")
-
-    print("\nSaved to data/processed/tag_scores.json")
-
-
-if __name__ == "__main__":
-    analyze_tags()

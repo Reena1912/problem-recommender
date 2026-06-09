@@ -138,7 +138,7 @@ git clone https://github.com/Reena1912/leetcode-recommender.git
 cd leetcode-recommender
 
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+ Windows: venv\Scripts\activate
 
 pip install -r requirements.txt
 ```

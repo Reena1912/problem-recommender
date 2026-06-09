@@ -1,13 +1,3 @@
-"""
-LeetCode GraphQL scraper.
-
-The top-level functions (fetch_user_profile_data, fetch_solved_slugs_data,
-fetch_all_problems_data) accept explicit username / session_cookie arguments
-so any user's public profile can be fetched without touching config.py.
-
-The original __main__ block still works for local single-user use.
-"""
-
 import requests
 import json
 import sys
@@ -26,8 +16,6 @@ def _make_headers(session_cookie: str) -> dict:
         "Cookie": f"LEETCODE_SESSION={session_cookie}",
     }
 
-
-# ── GraphQL query strings ──────────────────────────────────────────────────
 
 PROFILE_QUERY = """
 query userSolvedProblems($username: String!) {
@@ -100,10 +88,7 @@ query userSolvedProblemsDetail($username: String!) {
 """
 
 
-# ── Public functions (accept explicit args, no side-effects) ───────────────
-
 def fetch_user_profile_data(username: str, session_cookie: str) -> dict:
-    """Return raw profile JSON for any LeetCode username."""
     payload = {"query": PROFILE_QUERY, "variables": {"username": username}}
     response = requests.post(
         GRAPHQL_URL, json=payload, headers=_make_headers(session_cookie)
@@ -116,7 +101,6 @@ def fetch_user_profile_data(username: str, session_cookie: str) -> dict:
 
 
 def fetch_solved_slugs_data(username: str, session_cookie: str) -> list[str]:
-    """Return a list of recently-solved titleSlugs for any username."""
     payload = {
         "query": SOLVED_PROBLEMS_QUERY,
         "variables": {"username": username},
@@ -130,10 +114,6 @@ def fetch_solved_slugs_data(username: str, session_cookie: str) -> list[str]:
 
 
 def fetch_all_problems_data(session_cookie: str) -> list[dict]:
-    """
-    Fetch the entire LeetCode problem catalog (3000+ problems).
-    This is user-independent — cache the result at the app level.
-    """
     all_questions: list[dict] = []
     skip = 0
     limit = 100
@@ -167,35 +147,3 @@ def fetch_all_problems_data(session_cookie: str) -> list[dict]:
         skip += limit
 
     return all_questions
-
-
-# ── Legacy file-based helpers (used by __main__ / standalone scripts) ──────
-
-def fetch_profile():
-    data = fetch_user_profile_data(USERNAME, SESSION_COOKIE)
-    os.makedirs("data/raw", exist_ok=True)
-    with open("data/raw/profile_raw.json", "w") as f:
-        json.dump(data, f, indent=2)
-    print("Saved to data/raw/profile_raw.json")
-
-
-def fetch_all_problems():
-    questions = fetch_all_problems_data(SESSION_COOKIE)
-    os.makedirs("data/raw", exist_ok=True)
-    with open("data/raw/all_problems_raw.json", "w") as f:
-        json.dump(questions, f, indent=2)
-    print(f"Saved {len(questions)} problems to data/raw/all_problems_raw.json")
-
-
-def fetch_solved_slugs():
-    slugs = fetch_solved_slugs_data(USERNAME, SESSION_COOKIE)
-    os.makedirs("data/raw", exist_ok=True)
-    with open("data/raw/solved_slugs.json", "w") as f:
-        json.dump(slugs, f, indent=2)
-    print(f"Saved {len(slugs)} solved slugs")
-
-
-if __name__ == "__main__":
-    fetch_profile()
-    fetch_all_problems()
-    fetch_solved_slugs()
