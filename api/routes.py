@@ -10,8 +10,9 @@ If username is omitted the endpoint falls back to the default configured user
 
 import os
 import sys
+import json
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, BackgroundTasks, Header, Depends
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import SESSION_COOKIE, USERNAME
@@ -42,12 +43,15 @@ def _resolve_username(username: str | None) -> str:
     return resolved
 
 
-def _get_user_data(request: Request, username: str) -> dict:
+def _get_user_data(request: Request, username: str, background_tasks: BackgroundTasks | None = None) -> dict:
     """Run the pipeline for the given user, raising HTTP errors on failure."""
     try:
-        from api.tracker import log_user
         data = run_pipeline(username, request.app.state.all_problems, SESSION_COOKIE)
-        log_user(username, data)   # ← saves user to Supabase
+        if background_tasks:
+            background_tasks.add_task(log_user, username, data)
+        else:
+            import threading
+            threading.Thread(target=log_user, args=(username, data), daemon=True).start()
         return data
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -78,10 +82,11 @@ def _top_weak_tags(weakness_map: dict, n: int = 3) -> list[str]:
 @router.get("/recommend", response_model=RecommendationResponse)
 def recommend(
     request: Request,
+    background_tasks: BackgroundTasks,
     username: str | None = Query(default=None, description="LeetCode username"),
 ):
     user = _resolve_username(username)
-    data = _get_user_data(request, user)
+    data = _get_user_data(request, user, background_tasks)
     ranked = data["ranked_problems"]
 
     if not ranked:
@@ -99,6 +104,7 @@ def recommend(
 def recommend_by_difficulty(
     difficulty: str,
     request: Request,
+    background_tasks: BackgroundTasks,
     username: str | None = Query(default=None, description="LeetCode username"),
 ):
     valid = ["easy", "medium", "hard"]
@@ -110,7 +116,7 @@ def recommend_by_difficulty(
         )
 
     user = _resolve_username(username)
-    data = _get_user_data(request, user)
+    data = _get_user_data(request, user, background_tasks)
 
     filtered = [
         p for p in data["ranked_problems"]
@@ -133,10 +139,11 @@ def recommend_by_difficulty(
 @router.get("/stats", response_model=UserStatsResponse)
 def stats(
     request: Request,
+    background_tasks: BackgroundTasks,
     username: str | None = Query(default=None, description="LeetCode username"),
 ):
     user = _resolve_username(username)
-    data = _get_user_data(request, user)
+    data = _get_user_data(request, user, background_tasks)
 
     return UserStatsResponse(
         username=user,
@@ -149,6 +156,7 @@ def stats(
 @router.post("/update", response_model=UpdateResponse)
 def update(
     request: Request,
+    background_tasks: BackgroundTasks,
     username: str | None = Query(default=None, description="LeetCode username"),
 ):
     from api.user_pipeline import _cache
@@ -156,7 +164,7 @@ def update(
     user = _resolve_username(username)
     _cache.pop(user, None)
 
-    data = _get_user_data(request, user)
+    data = _get_user_data(request, user, background_tasks)
     top = data["ranked_problems"][0] if data["ranked_problems"] else None
 
     return UpdateResponse(
@@ -168,16 +176,54 @@ def update(
 
 # ── Admin Endpoints ────────────────────────────────────────────────────────
 
+def _verify_admin_secret(x_admin_secret: str | None = Header(default=None, alias="X-Admin-Secret")):
+    expected = os.getenv("ADMIN_SECRET", "")
+    if not expected or x_admin_secret != expected:
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid or missing admin secret in 'X-Admin-Secret' header."
+        )
+
+
+def _background_refresh_catalog(app):
+    try:
+        from scraper.fetch_profile import fetch_all_problems_data
+        print("[catalog-refresh] Fetching fresh catalog from LeetCode...")
+        problems = fetch_all_problems_data(SESSION_COOKIE)
+        app.state.all_problems = problems
+        
+        catalog_path = os.path.join("data", "problems_catalog.json")
+        os.makedirs(os.path.dirname(catalog_path), exist_ok=True)
+        with open(catalog_path, "w", encoding="utf-8") as f:
+            json.dump(problems, f, indent=2)
+        print(f"[catalog-refresh] Catalog updated successfully. Total problems: {len(problems)}")
+    except Exception as e:
+        print(f"[catalog-refresh] Failed to refresh catalog: {e}")
+
+
+@router.post("/admin/refresh-catalog")
+def refresh_catalog(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    _auth=Depends(_verify_admin_secret),
+):
+    """
+    Triggers a background task to refresh the problem catalog from LeetCode
+    and update the local cached JSON file.
+    """
+    background_tasks.add_task(_background_refresh_catalog, request.app)
+    return {
+        "success": True,
+        "message": "Problem catalog refresh triggered in the background."
+    }
+
+
 @router.get("/admin/users")
-def admin_all_users(secret: str = Query(description="Admin secret key")):
+def admin_all_users(_auth=Depends(_verify_admin_secret)):
     """
     Returns every user who has ever used the app.
-    Requires ?secret=<ADMIN_SECRET> (set this in your .env / Render env vars).
+    Requires X-Admin-Secret header.
     """
-    expected = os.getenv("ADMIN_SECRET", "")
-    if not expected or secret != expected:
-        raise HTTPException(status_code=403, detail="Invalid or missing admin secret.")
-
     users = get_all_users()
     return {
         "total_users": len(users),
@@ -186,31 +232,25 @@ def admin_all_users(secret: str = Query(description="Admin secret key")):
 
 
 @router.get("/admin/users/{username}")
-def admin_single_user(username: str, secret: str = Query(description="Admin secret key")):
+def admin_single_user(username: str, _auth=Depends(_verify_admin_secret)):
     """
     Returns saved stats for a specific LeetCode username.
-    Requires ?secret=<ADMIN_SECRET>.
+    Requires X-Admin-Secret header.
     """
-    expected = os.getenv("ADMIN_SECRET", "")
-    if not expected or secret != expected:
-        raise HTTPException(status_code=403, detail="Invalid or missing admin secret.")
-
     user = get_user(username)
     if not user:
         raise HTTPException(status_code=404, detail=f"No data found for '{username}'.")
     return user
 
-@router.get("/admin/debug")
-def admin_debug(secret: str = Query()):
-    expected = os.getenv("ADMIN_SECRET", "")
-    if not expected or secret != expected:
-        raise HTTPException(status_code=403, detail="Invalid secret.")
 
+@router.get("/admin/debug")
+def admin_debug(_auth=Depends(_verify_admin_secret)):
+    expected = os.getenv("ADMIN_SECRET", "")
     result = {
         "env_vars": {
             "SUPABASE_URL_set":          bool(os.getenv("SUPABASE_URL")),
             "SUPABASE_SERVICE_KEY_set":  bool(os.getenv("SUPABASE_SERVICE_KEY")),
-            "ADMIN_SECRET_set":          bool(os.getenv("ADMIN_SECRET")),
+            "ADMIN_SECRET_set":          bool(expected),
         },
         "supabase_import": None,
         "supabase_connect": None,
@@ -263,12 +303,10 @@ def admin_debug(secret: str = Query()):
         result["error"] = "tracker.log_user threw an exception"
 
     return result
-@router.get("/admin/test-write")
-def admin_test_write(secret: str = Query()):
-    expected = os.getenv("ADMIN_SECRET", "")
-    if not expected or secret != expected:
-        raise HTTPException(status_code=403, detail="Invalid secret.")
 
+
+@router.get("/admin/test-write")
+def admin_test_write(_auth=Depends(_verify_admin_secret)):
     from supabase import create_client
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_SERVICE_KEY")
@@ -293,9 +331,6 @@ def admin_test_write(secret: str = Query()):
     
     
 @router.get("/admin/tracker-status")
-def tracker_status(secret: str = Query()):
-    expected = os.getenv("ADMIN_SECRET", "")
-    if not expected or secret != expected:
-        raise HTTPException(status_code=403, detail="Invalid secret.")
+def tracker_status(_auth=Depends(_verify_admin_secret)):
     from api.tracker import get_last_error
     return {"last_tracker_error": get_last_error()}

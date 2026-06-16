@@ -10,6 +10,7 @@ FastAPI application entry point.
 
 import os
 import sys
+import json
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
@@ -21,9 +22,27 @@ from scraper.fetch_profile import fetch_all_problems_data
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Fetching LeetCode problem catalog (this takes ~10 s)…")
-    app.state.all_problems = fetch_all_problems_data(SESSION_COOKIE)
-    print(f"  ✓ {len(app.state.all_problems)} problems loaded")
+    catalog_path = os.path.join("data", "problems_catalog.json")
+    if os.path.exists(catalog_path):
+        print(f"Loading LeetCode problem catalog from local cache: {catalog_path}")
+        try:
+            with open(catalog_path, "r", encoding="utf-8") as f:
+                app.state.all_problems = json.load(f)
+            print(f"  [OK] {len(app.state.all_problems)} problems loaded from local cache")
+        except Exception as e:
+            print(f"  [WARNING] Failed to load catalog from cache ({e}). Fetching from LeetCode...")
+            app.state.all_problems = fetch_all_problems_data(SESSION_COOKIE)
+            os.makedirs(os.path.dirname(catalog_path), exist_ok=True)
+            with open(catalog_path, "w", encoding="utf-8") as f:
+                json.dump(app.state.all_problems, f, indent=2)
+            print(f"  [OK] {len(app.state.all_problems)} problems loaded and cached")
+    else:
+        print("No local problem catalog cache found. Fetching LeetCode problem catalog (takes ~30 s)…")
+        app.state.all_problems = fetch_all_problems_data(SESSION_COOKIE)
+        os.makedirs(os.path.dirname(catalog_path), exist_ok=True)
+        with open(catalog_path, "w", encoding="utf-8") as f:
+            json.dump(app.state.all_problems, f, indent=2)
+        print(f"  [OK] {len(app.state.all_problems)} problems loaded and cached")
 
     # Backwards-compat: load pre-trained model if present
     model_path = os.path.join("model", "model.pkl")
@@ -32,11 +51,11 @@ async def lifespan(app: FastAPI):
         model_data = joblib.load(model_path)
         app.state.default_ranked = model_data.get("ranked_problems", [])
         app.state.default_weakness = model_data.get("weakness_map", {})
-        print(f"  ✓ model.pkl loaded ({len(app.state.default_ranked)} ranked problems)")
+        print(f"  [OK] model.pkl loaded ({len(app.state.default_ranked)} ranked problems)")
     else:
         app.state.default_ranked = []
         app.state.default_weakness = {}
-        print("  ℹ  No model.pkl found — per-user analysis will run on demand")
+        print("  [INFO] No model.pkl found — per-user analysis will run on demand")
 
     yield
 
