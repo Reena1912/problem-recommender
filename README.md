@@ -12,7 +12,7 @@ An intelligent, production-ready system that analyzes any LeetCode profile, iden
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-**[🚀 Live Dashboard](https://problem-recommender.streamlit.app/)** &nbsp;|&nbsp; **[📖 Interactive API Docs](https://leetcode-recommender-api.onrender.com/docs)**
+**[🚀 Live Dashboard](https://problem-recommender-dashboard.streamlit.app/)** &nbsp;|&nbsp; **[📖 Interactive API Docs](https://leetcode-recommender-api.onrender.com/docs)**
 
 </div>
 
