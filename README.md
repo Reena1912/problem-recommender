@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ LeetCode Recommender — Bold Editorial UI
+#  LeetCode Recommender 
 
 **Stop grinding blindly. Target your exact skill gaps.**
 
@@ -12,13 +12,13 @@ An intelligent, production-ready system that analyzes any LeetCode profile, iden
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-**[🚀 Live Dashboard](https://problem-recommender.streamlit.app/)** &nbsp;|&nbsp; **[📖 Interactive API Docs](https://leetcode-recommender-api.onrender.com/docs)**
+**[ Live Dashboard](https://problem-recommender-dashboard.streamlit.app/)** &nbsp;|&nbsp; **[ Interactive API Docs](https://leetcode-recommender-api.onrender.com/docs)**
 
 </div>
 
 ---
 
-## 🌟 Key Features
+##  Key Features
 
 * **Data-Driven Weakness Scoring**: Calculates a weakness coefficient for every algorithmic tag (0.0 to 1.0) based on your solved ratio relative to your strengths.
 * **Instant Recommendations**: Ranks 3,900+ LeetCode problems and serves the top Easy, Medium, or Hard problem targeting your specific gap.
@@ -30,7 +30,7 @@ An intelligent, production-ready system that analyzes any LeetCode profile, iden
 
 ---
 
-## 🛠️ System Architecture
+##  System Architecture
 
 ```
 problem-recommender-system/
@@ -82,7 +82,7 @@ User types LeetCode username on Streamlit Cloud
 
 ---
 
-## ⚙️ Mathematical Model
+##  Mathematical Model
 
 ### 1. Tag Weakness Scoring
 The system measures a user's relative weakness in a particular topic (tag) using this formula:
@@ -103,7 +103,7 @@ All unsolved problems are ranked in descending order of this score. The top resu
 
 ---
 
-## 🔌 API Reference
+##  API Reference
 
 All routes accept `?username=<leetcode_username>`. If omitted, they fall back to the default `LEETCODE_USERNAME` in `.env`.
 
@@ -121,7 +121,7 @@ All routes accept `?username=<leetcode_username>`. If omitted, they fall back to
 
 ---
 
-## 🚀 Running Locally
+##  Running Locally
 
 ### Prerequisites
 * Python 3.11+
@@ -161,10 +161,7 @@ uvicorn api.main:app --reload
 streamlit run dashboard.py
 ```
 
----
 
-## 📝 License
-Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
