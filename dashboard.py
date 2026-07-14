@@ -6,9 +6,63 @@ Fixes: white text enforced everywhere, hero background image added.
 import streamlit as st
 import requests
 import plotly.graph_objects as go
+from dotenv import load_dotenv
+load_dotenv()
 
 import os
+import json
+import auth as auth_mod
+import importlib
+importlib.reload(auth_mod)
+
 API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000")
+
+# Theme state check and variables definition
+css_vars = """
+:root {
+    --bg-color: #0c0c0c;
+    --text-color: #ffffff;
+    --card-bg: #111111;
+    --card-border: #1f1f1f;
+    --card-hover-bg: #141414;
+    --card-selected-bg: #150c08;
+    --card-selected-border: #ff4d00;
+    --card-idx-color: #2a2a2a;
+    --nav-bg: #0c0c0c;
+    --nav-border: #1f1f1f;
+    --hero-grad-start: rgba(12, 12, 12, 0.93);
+    --hero-grad-mid: rgba(12, 12, 12, 0.73);
+    --hero-grad-end: rgba(12, 12, 12, 0.33);
+    --hero-top-grad: #0c0c0c;
+    --text-muted: #888888;
+    --text-desc: #cccccc;
+    --search-bg: #111111;
+    --search-border: #1f1f1f;
+    --input-bg: #1a1a1a;
+    --input-border: #2a2a2a;
+    --placeholder-color: #444444;
+    --dpanel-bg: #0e0e0e;
+    --dpanel-border: #ff4d0022;
+    --stats-lbl: #444444;
+    --sec-num-color: #161616;
+    --tchip-bg: #161616;
+    --tchip-color: #666666;
+    --tchip-border: #222222;
+    --tab-list-bg: #111111;
+    --tab-list-border: #1f1f1f;
+    --tab-selected-bg: #1e1e1e;
+    --tab-unselected-color: #444444;
+    --footer-text: #222222;
+    --pillar-border: rgba(255, 255, 255, 0.08);
+    --button-sec-bg: #1f1f1f;
+    --button-sec-text: #ffffff;
+    --button-sec-hover: #2d2d2d;
+}
+"""
+plotly_text_color = "#ffffff"
+plotly_axis_color = "#cccccc"
+plotly_grid_color = "#161616"
+unsolved_pie_color = "#191919"
 
 # Free dark coding image from Unsplash (no API key needed)
 HERO_BG = "https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=1600&q=80"
@@ -21,12 +75,13 @@ st.set_page_config(
 )
 
 st.markdown(f"""<style>
+{css_vars}
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;900&display=swap');
 
 /* ── GLOBAL RESET ── */
 *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0;}}
 
-/* Force white text everywhere Streamlit tries to go gray */
+/* Force theme colors everywhere */
 html,body,
 [data-testid="stAppViewContainer"],
 [data-testid="stAppViewContainer"]>.main,
@@ -37,24 +92,24 @@ div,p,span,li,a{{
     font-family:'Inter',sans-serif!important;
     background-color:transparent;
 }}
-/* Streamlit wraps all markdown in <p> tags - force white */
+
 [data-testid="stMarkdownContainer"] p,
 [data-testid="stMarkdownContainer"] span,
 [data-testid="stMarkdownContainer"] div{{
-    color:#ffffff!important;
+    color:var(--text-color)!important;
 }}
 
-[data-testid="stAppViewContainer"]{{background:#0c0c0c!important;}}
-[data-testid="stAppViewContainer"]>.main{{background:#0c0c0c!important;}}
+[data-testid="stAppViewContainer"]{{background:var(--bg-color)!important;}}
+[data-testid="stAppViewContainer"]>.main{{background:var(--bg-color)!important;}}
 [data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"]{{display:none!important;}}
 .block-container{{padding:0!important;max-width:100%!important;}}
 
 /* ── NAV ── */
-.lc-nav{{display:flex;align-items:center;justify-content:space-between;padding:1.3rem 4rem;border-bottom:1px solid #1f1f1f;background:#0c0c0c;position:sticky;top:0;z-index:100;}}
-.lc-nav-logo{{font-family:'Bebas Neue',sans-serif!important;font-size:1.5rem;letter-spacing:0.08em;color:#ffffff!important;}}
+.lc-nav{{display:flex;align-items:center;justify-content:space-between;padding:1.3rem 4rem;border-bottom:1px solid var(--nav-border);background:var(--nav-bg);position:sticky;top:0;z-index:100;}}
+.lc-nav-logo{{font-family:'Bebas Neue',sans-serif!important;font-size:1.5rem;letter-spacing:0.08em;color:var(--text-color)!important;}}
 .lc-nav-logo span{{color:#ff4d00!important;}}
-.lc-nav-links{{display:flex;gap:2.5rem;font-size:0.82rem;font-weight:500;color:#888888!important;letter-spacing:0.04em;}}
-.lc-nav-links span{{color:#888888!important;}}
+.lc-nav-links{{display:flex;gap:2.5rem;font-size:0.82rem;font-weight:500;color:var(--text-muted)!important;letter-spacing:0.04em;}}
+.lc-nav-links span{{color:var(--text-muted)!important;}}
 .lc-nav-cta{{background:#ff4d00;color:#ffffff!important;font-weight:700;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.55rem 1.3rem;border-radius:50px;border:none;}}
 
 /* ── HERO ── */
@@ -63,62 +118,65 @@ div,p,span,li,a{{
     min-height:520px;
     padding:3.5rem 4rem 0;
     overflow:hidden;
-    border-bottom:1px solid #1f1f1f;
+    border-bottom:1px solid var(--nav-border);
     background-image:url('{HERO_BG}');
     background-size:cover;
     background-position:center 30%;
 }}
-/* Dark overlay so text pops over photo */
+/* overlay so text pops over photo */
 .lc-hero::before{{
     content:'';
     position:absolute;inset:0;
-    background:linear-gradient(90deg,#0c0c0cee 0%,#0c0c0cbb 50%,#0c0c0c55 100%),
-               linear-gradient(180deg,#0c0c0c22 0%,#0c0c0cdd 85%,#0c0c0c 100%);
+    background:linear-gradient(90deg,var(--hero-grad-start) 0%,var(--hero-grad-mid) 50%,var(--hero-grad-end) 100%),
+               linear-gradient(180deg,rgba(12,12,12,0.1) 0%,var(--hero-grad-mid) 85%,var(--hero-top-grad) 100%);
     z-index:0;
 }}
 .lc-hero-glow{{position:absolute;top:-60px;right:-40px;width:500px;height:500px;background:radial-gradient(circle,#ff4d0030 0%,transparent 65%);pointer-events:none;z-index:1;}}
 .lc-hero-content{{position:relative;z-index:2;}}
 .lc-eyebrow{{font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.2em;color:#ff4d00!important;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.7rem;}}
 .lc-eyebrow-line{{display:inline-block;width:28px;height:2px;background:#ff4d00;flex-shrink:0;}}
-.lc-hero-title{{font-family:'Bebas Neue',sans-serif!important;font-size:8rem;line-height:0.88;color:#ffffff!important;letter-spacing:0.01em;margin-bottom:1.5rem;}}
+.lc-hero-title{{font-family:'Bebas Neue',sans-serif!important;font-size:8rem;line-height:0.88;color:var(--text-color)!important;letter-spacing:0.01em;margin-bottom:1.5rem;}}
 .lc-hero-title .orange{{color:#ff4d00!important;}}
-.lc-hero-desc{{font-size:1rem;color:#cccccc!important;font-weight:300;line-height:1.7;max-width:420px;margin-bottom:2.5rem;}}
+.lc-hero-desc{{font-size:1rem;color:var(--text-desc)!important;font-weight:300;line-height:1.7;max-width:420px;margin-bottom:2.5rem;}}
 .lc-hero-right{{position:absolute;right:4rem;top:3.5rem;max-width:260px;text-align:right;z-index:2;}}
-.lc-hero-right-q{{font-size:1.25rem;font-weight:700;color:#ffffff!important;line-height:1.35;margin-bottom:0.8rem;}}
-.lc-hero-right-s{{font-size:0.8rem;color:#aaaaaa!important;line-height:1.65;}}
-.lc-pillars{{display:flex;border-top:1px solid rgba(255,255,255,0.08);margin-top:2rem;position:relative;z-index:2;}}
-.lc-pillar{{flex:1;padding:1.2rem 0;border-right:1px solid rgba(255,255,255,0.08);}}
+.lc-hero-right-q{{font-size:1.25rem;font-weight:700;color:var(--text-color)!important;line-height:1.35;margin-bottom:0.8rem;}}
+.lc-hero-right-s{{font-size:0.8rem;color:var(--text-muted)!important;line-height:1.65;}}
+.lc-pillars{{display:flex;border-top:1px solid var(--pillar-border);margin-top:2rem;position:relative;z-index:2;}}
+.lc-pillar{{flex:1;padding:1.2rem 0;border-right:1px solid var(--pillar-border);}}
 .lc-pillar:last-child{{border-right:none;}}
 .lc-pillar-num{{font-size:0.62rem;color:#ff4d00!important;font-weight:600;letter-spacing:0.1em;margin-bottom:0.3rem;}}
-.lc-pillar-lbl{{font-size:0.75rem;color:#888888!important;}}
+.lc-pillar-lbl{{font-size:0.75rem;color:var(--text-muted)!important;}}
 
 /* ── SEARCH STRIP ── */
-.lc-search{{background:#111111;border-bottom:1px solid #1f1f1f;padding:1.4rem 4rem;}}
-.lc-search-label{{font-size:0.68rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#555555!important;white-space:nowrap;padding-top:0.75rem;}}
-[data-testid="stTextInput"] input{{background:#1a1a1a!important;border:1px solid #2a2a2a!important;border-radius:7px!important;color:#ffffff!important;font-family:'Inter',sans-serif!important;font-size:0.95rem!important;padding:0.72rem 1.2rem!important;transition:border-color 0.2s,box-shadow 0.2s!important;}}
-[data-testid="stTextInput"] input::placeholder{{color:#444444!important;}}
-[data-testid="stTextInput"] input:focus{{border-color:#ff4d00!important;box-shadow:0 0 0 3px #ff4d0018!important;}}
+.lc-search{{background:var(--search-bg);border-bottom:1px solid var(--search-border);padding:1.4rem 4rem;}}
+.lc-search-label{{font-size:0.68rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted)!important;white-space:nowrap;padding-top:0.75rem;}}
+div[data-testid="stTextInputRootElement"]{{background-color:var(--input-bg)!important;border:1px solid var(--input-border)!important;border-radius:7px!important;transition:border-color 0.2s,box-shadow 0.2s!important;}}
+div[data-testid="stTextInputRootElement"]:focus-within{{border-color:#ff4d00!important;box-shadow:0 0 0 3px #ff4d0018!important;}}
+div[data-testid="stTextInputRootElement"] input{{color:var(--text-color)!important;font-family:'Inter',sans-serif!important;font-size:0.95rem!important;background:transparent!important;padding:0.72rem 1.2rem!important;border:none!important;}}
+div[data-testid="stTextInputRootElement"] input::placeholder{{color:var(--placeholder-color)!important;opacity:1!important;}}
+div[data-testid="stTextInputRootElement"] input::-webkit-input-placeholder{{color:var(--placeholder-color)!important;opacity:1!important;}}
+div[data-testid="stTextInputRootElement"] input::-moz-placeholder{{color:var(--placeholder-color)!important;opacity:1!important;}}
 [data-testid="stTextInput"] label{{display:none!important;}}
 
 /* ── BUTTONS ── */
 .stButton>button{{font-family:'Inter',sans-serif!important;font-weight:700!important;letter-spacing:0.06em!important;border-radius:7px!important;transition:all 0.2s!important;text-transform:uppercase!important;font-size:0.76rem!important;}}
 .stButton>button[kind="primary"]{{background:#ff4d00!important;color:#ffffff!important;border:none!important;padding:0.72rem 1.4rem!important;}}
 .stButton>button[kind="primary"]:hover{{background:#e04400!important;transform:translateY(-1px);box-shadow:0 8px 28px #ff4d0045!important;}}
-.stButton>button[kind="secondary"]{{background:transparent!important;color:#666666!important;border:1px solid #2a2a2a!important;padding:0.72rem 1.1rem!important;}}
-.stButton>button[kind="secondary"]:hover{{border-color:#ff4d00!important;color:#ff4d00!important;}}
+.stButton>button[kind="secondary"]{{background:var(--button-sec-bg)!important;color:var(--button-sec-text)!important;border:1px solid var(--card-border)!important;padding:0.72rem 1.1rem!important;}}
+.stButton>button[kind="secondary"]:hover{{background:var(--button-sec-hover)!important;border-color:var(--card-border)!important;}}
 
 /* ── STAT STRIP ── */
-.lc-stats{{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #1f1f1f;background:#0c0c0c;}}
-.lc-stat{{padding:1.8rem 0 1.8rem 4rem;border-right:1px solid #1f1f1f;position:relative;}}
+.lc-stats{{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--nav-border);background:var(--nav-bg);}}
+.lc-stat{{padding:1.8rem 0 1.8rem 4rem;border-right:1px solid var(--nav-border);position:relative;}}
 .lc-stat:last-child{{border-right:none;}}
 .lc-stat::before{{content:'';position:absolute;top:0;left:0;right:0;height:2px;}}
 .lc-stat.tot::before{{background:#ff4d00;}}
 .lc-stat.ez::before{{background:#22c55e;}}
 .lc-stat.md::before{{background:#f59e0b;}}
 .lc-stat.hd::before{{background:#ef4444;}}
-.lc-stat-tag{{font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;color:#444444!important;margin-bottom:0.5rem;}}
-.lc-stat-num{{font-family:'Bebas Neue',sans-serif!important;font-size:3.8rem;line-height:1;color:#ffffff!important;}}
-.lc-stat-of{{font-size:0.73rem;color:#444444!important;margin-top:0.2rem;}}
+.lc-stat-tag{{font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-muted)!important;margin-bottom:0.5rem;}}
+.lc-stat-num{{font-family:'Bebas Neue',sans-serif!important;font-size:3.8rem;line-height:1;color:var(--text-color)!important;}}
+.lc-stat-of{{font-size:0.73rem;color:var(--text-muted)!important;margin-top:0.2rem;}}
 .lc-stat-pct{{display:inline-block;font-size:0.65rem;font-weight:700;padding:2px 9px;border-radius:3px;margin-top:0.5rem;letter-spacing:0.04em;text-transform:uppercase;}}
 .p-tot{{background:#ff4d0015;color:#ff4d00!important;}}
 .p-ez{{background:#22c55e15;color:#22c55e!important;}}
@@ -126,62 +184,149 @@ div,p,span,li,a{{
 .p-hd{{background:#ef444415;color:#ef4444!important;}}
 
 /* ── SECTIONS ── */
-.lc-section{{padding:3rem 4rem;border-bottom:1px solid #1f1f1f;background:#0c0c0c;}}
+.lc-section{{padding:3rem 4rem;border-bottom:1px solid var(--nav-border);background:var(--bg-color);}}
 .lc-sec-hdr{{display:flex;align-items:baseline;gap:1.5rem;margin-bottom:1.8rem;}}
-.lc-sec-num{{font-family:'Bebas Neue',sans-serif!important;font-size:5rem;color:#161616;line-height:1;flex-shrink:0;}}
-.lc-sec-title{{font-family:'Bebas Neue',sans-serif!important;font-size:2.2rem;color:#ffffff!important;letter-spacing:0.03em;line-height:1;}}
+.lc-sec-num{{font-family:'Bebas Neue',sans-serif!important;font-size:5rem;color:var(--sec-num-color);line-height:1;flex-shrink:0;}}
+.lc-sec-title{{font-family:'Bebas Neue',sans-serif!important;font-size:2.2rem;color:var(--text-color)!important;letter-spacing:0.03em;line-height:1;}}
 .lc-sec-title span{{color:#ff4d00!important;}}
-.lc-sec-sub{{font-size:0.76rem;color:#555555!important;margin-top:0.3rem;}}
+.lc-sec-sub{{font-size:0.76rem;color:var(--text-muted)!important;margin-top:0.3rem;}}
 
 /* ── REC CARDS ── */
-.lc-rcard{{background:#111111;border:1px solid #1f1f1f;border-radius:4px;padding:1.2rem 1.5rem;margin-bottom:0.55rem;position:relative;transition:border-color 0.2s,background 0.2s;}}
-.lc-rcard:hover{{border-color:#2a2a2a;background:#141414;}}
-.lc-rcard.active{{border-color:#ff4d00;background:#150c08;border-left-width:3px;}}
-.lc-rcard-top{{display:flex;justify-content:space-between;align-items:flex-start;}}
-.lc-rcard-idx{{font-family:'Bebas Neue',sans-serif!important;font-size:0.75rem;color:#2a2a2a!important;letter-spacing:0.1em;margin-bottom:0.3rem;}}
-.lc-rcard-title{{font-size:0.98rem;font-weight:600;color:#ffffff!important;margin-bottom:0.45rem;}}
+.lc-rcard{{background:var(--card-bg);border:1px solid var(--card-border);border-radius:4px;padding:1.2rem 1.5rem;margin-bottom:0.55rem;position:relative;transition:border-color 0.2s,background 0.2s;}}
+.lc-rcard:hover{{border-color:var(--card-border);background:var(--card-hover-bg);}}
+.lc-rcard.active{{border-color:var(--card-selected-border);background:var(--card-selected-bg);border-left-width:3px;}}
+.lc-rcard-idx{{font-family:'Bebas Neue',sans-serif!important;font-size:0.75rem;color:var(--card-idx-color)!important;letter-spacing:0.1em;margin-bottom:0.3rem;}}
+.lc-rcard-title{{font-size:0.98rem;font-weight:600;color:var(--text-color)!important;margin-bottom:0.45rem;}}
 .lc-rcard-meta{{display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;}}
 .lc-dbadge{{font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:3px;letter-spacing:0.06em;text-transform:uppercase;}}
 .lc-de{{background:#22c55e12;color:#22c55e!important;border:1px solid #22c55e22;}}
 .lc-dm{{background:#f59e0b12;color:#f59e0b!important;border:1px solid #f59e0b22;}}
 .lc-dh{{background:#ef444412;color:#ef4444!important;border:1px solid #ef444422;}}
-.lc-rmeta{{font-size:0.68rem;color:#444444!important;}}
-.lc-tchip{{display:inline-block;font-size:0.62rem;background:#161616;color:#666666!important;padding:2px 7px;border-radius:3px;border:1px solid #222222;margin:2px 1px;}}
-.lc-wsbar-wrap{{width:70px;height:3px;background:#1f1f1f;border-radius:2px;margin-top:0.35rem;margin-left:auto;}}
+.lc-rmeta{{font-size:0.68rem;color:var(--text-muted)!important;}}
+[data-testid="stMarkdownContainer"] span.lc-tchip{{display:inline-block;font-size:0.62rem;background:var(--tchip-bg);color:var(--tchip-color)!important;padding:2px 7px;border-radius:3px;border:1px solid var(--tchip-border);margin:2px 1px;}}
+.lc-wsbar-wrap{{width:70px;height:3px;background:var(--card-border);border-radius:2px;margin-top:0.35rem;margin-left:auto;}}
 .lc-wsbar{{height:3px;background:#ff4d00;border-radius:2px;}}
 .lc-wsscore{{font-family:'Bebas Neue',sans-serif!important;font-size:2rem;line-height:1;letter-spacing:0.02em;}}
-.lc-wslbl{{font-size:0.58rem;color:#2a2a2a!important;text-transform:uppercase;letter-spacing:0.1em;}}
+.lc-wslbl{{font-size:0.58rem;color:var(--card-idx-color)!important;text-transform:uppercase;letter-spacing:0.1em;}}
 
 /* ── DETAIL PANEL ── */
-.lc-dpanel{{background:#0e0e0e;border:1px solid #ff4d0022;border-radius:4px;padding:1.3rem 1.5rem;margin-bottom:0.55rem;}}
-.lc-dpanel-hdr{{font-size:0.6rem;color:#333333!important;text-transform:uppercase;letter-spacing:0.14em;margin-bottom:0.6rem;}}
-.lc-dstats{{display:flex;gap:2.5rem;margin:0.7rem 0 1rem;}}
-.lc-dstat-val{{font-family:'Bebas Neue',sans-serif!important;font-size:2rem;color:#ffffff!important;line-height:1;}}
-.lc-dstat-lbl{{font-size:0.6rem;color:#444444!important;text-transform:uppercase;letter-spacing:0.1em;margin-top:0.2rem;}}
-.lc-tags-lbl{{font-size:0.62rem;color:#333333!important;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.4rem;}}
+.lc-dpanel{{background:var(--dpanel-bg);border:1px solid var(--dpanel-border);border-radius:4px;padding:1.3rem 1.5rem;margin-bottom:0.55rem;}}
+.lc-dpanel-hdr{{font-size:0.6rem;color:var(--text-muted)!important;text-transform:uppercase;letter-spacing:0.14em;margin-bottom:0.6rem;}}
+.lc-dstats{{display:flex;justify-content:space-between;margin:0.7rem 0 1rem;gap:1rem;}}
+.lc-dstat-val{{font-family:'Bebas Neue',sans-serif!important;font-size:2rem;color:var(--text-color)!important;line-height:1;white-space:nowrap!important;}}
+.lc-dstat-lbl{{font-size:0.6rem;color:var(--stats-lbl)!important;text-transform:uppercase;letter-spacing:0.1em;margin-top:0.2rem;white-space:nowrap!important;}}
+.lc-tags-lbl{{font-size:0.62rem;color:var(--stats-lbl)!important;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.4rem;}}
 
 /* ── WEAK TAG BAR ── */
-.lc-weak-bar{{background:#110a06;border:1px solid #ff4d0018;border-left:3px solid #ff4d00;border-radius:4px;padding:0.7rem 1.1rem;margin-bottom:1.1rem;font-size:0.8rem;color:#888888!important;display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap;}}
+.lc-weak-bar{{background:var(--dpanel-bg);border:1px solid var(--dpanel-border);border-left:3px solid #ff4d00;border-radius:4px;padding:0.7rem 1.1rem;margin-bottom:1.1rem;font-size:0.8rem;color:var(--text-muted)!important;display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap;}}
 
 /* ── TABS ── */
-[data-baseweb="tab-list"]{{background:#111111!important;border-radius:4px!important;padding:3px!important;border:1px solid #1f1f1f!important;gap:2px!important;margin-bottom:1.4rem;}}
-[data-baseweb="tab"]{{border-radius:3px!important;color:#444444!important;font-family:'Inter',sans-serif!important;font-weight:600!important;font-size:0.72rem!important;text-transform:uppercase!important;letter-spacing:0.07em!important;padding:0.42rem 0.9rem!important;}}
-[aria-selected="true"][data-baseweb="tab"]{{background:#1e1e1e!important;color:#ff4d00!important;}}
+[data-baseweb="tab-list"]{{background:var(--tab-list-bg)!important;border-radius:4px!important;padding:3px!important;border:1px solid var(--tab-list-border)!important;gap:2px!important;margin-bottom:1.4rem;}}
+[data-baseweb="tab"]{{border-radius:3px!important;color:var(--tab-unselected-color)!important;font-family:'Inter',sans-serif!important;font-weight:600!important;font-size:0.72rem!important;text-transform:uppercase!important;letter-spacing:0.07em!important;padding:0.42rem 0.9rem!important;}}
+[aria-selected="true"][data-baseweb="tab"]{{background:var(--tab-selected-bg)!important;color:#ff4d00!important;}}
 
 /* ── LINK BUTTON ── */
 [data-testid="stLinkButton"] a{{background:#ff4d00!important;color:#ffffff!important;border-radius:6px!important;font-weight:700!important;border:none!important;font-size:0.72rem!important;letter-spacing:0.06em!important;text-transform:uppercase!important;}}
 
 /* ── CHART LABEL ── */
-.lc-chart-lbl{{font-size:0.62rem;color:#333333!important;text-transform:uppercase;letter-spacing:0.14em;margin-bottom:0.8rem;padding-bottom:0.6rem;border-bottom:1px solid #1a1a1a;}}
+.lc-chart-lbl{{font-size:0.62rem;color:var(--text-color)!important;text-transform:uppercase;letter-spacing:0.14em;margin-bottom:0.8rem;padding-bottom:0.6rem;border-bottom:1px solid var(--card-border);}}
 
 /* ── FOOTER ── */
-.lc-footer{{padding:1.8rem 4rem;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1f1f1f;background:#0c0c0c;}}
-.lc-footer-logo{{font-family:'Bebas Neue',sans-serif!important;font-size:1.1rem;color:#222222!important;letter-spacing:0.08em;}}
+.lc-footer{{padding:1.8rem 4rem;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--nav-border);background:var(--nav-bg);}}
+.lc-footer-logo{{font-family:'Bebas Neue',sans-serif!important;font-size:1.1rem;color:var(--footer-text)!important;letter-spacing:0.08em;}}
 .lc-footer-logo span{{color:#ff4d00!important;}}
-.lc-footer-copy{{font-size:0.65rem;color:#222222!important;letter-spacing:0.06em;text-transform:uppercase;}}
+.lc-footer-copy{{font-size:0.65rem;color:var(--footer-text)!important;letter-spacing:0.06em;text-transform:uppercase;}}
 
-hr{{border-color:#1f1f1f!important;margin:0!important;}}
+hr{{border-color:var(--card-border)!important;margin:0!important;}}
 [data-testid="stSpinner"]>div{{border-top-color:#ff4d00!important;}}
+
+/* ── AUTH PAGE ── */
+.auth-wrap{{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg-color);padding:2rem;}}
+.auth-card{{width:100%;max-width:420px;}}
+.auth-eyebrow{{font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.2em;color:#ff4d00!important;margin-bottom:1rem;display:flex;align-items:center;gap:0.7rem;justify-content:center;}}
+.auth-title{{font-family:'Bebas Neue',sans-serif!important;font-size:3.2rem;line-height:0.95;color:var(--text-color)!important;letter-spacing:0.01em;margin-bottom:0.6rem;text-align:center;}}
+.auth-title .orange{{color:#ff4d00!important;}}
+.auth-sub{{font-size:0.85rem;color:var(--text-muted)!important;text-align:center;margin-bottom:2rem;}}
+div[data-testid="stTextInputRootElement"] input[type="password"]{{background:transparent!important;color:var(--text-color)!important;}}
+.auth-error{{background:#1a0c06;border:1px solid #ff4d0033;border-left:3px solid #ff4d00;border-radius:4px;padding:0.7rem 1rem;font-size:0.82rem;color:#ff9966!important;margin-bottom:1rem;}}
+.auth-success{{background:#0a150c;border:1px solid #22c55e33;border-left:3px solid #22c55e;border-radius:4px;padding:0.7rem 1rem;font-size:0.82rem;color:#7ee2a8!important;margin-bottom:1rem;}}
+.auth-field-lbl{{font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted)!important;margin-bottom:0.35rem;margin-top:0.9rem;}}
+.auth-user-chip{{font-size:0.78rem;color:var(--text-muted)!important;display:flex;align-items:center;flex-shrink:0!important;min-width:max-content!important;}}
+.auth-user-chip span{{color:#ff4d00!important;}}
+.auth-user-chip a.nav-logout-btn{{
+    color:#ff4d00!important;
+    text-decoration:none!important;
+    font-weight:600!important;
+    border:1px solid #ff4d0055!important;
+    padding:2px 8px!important;
+    border-radius:4px!important;
+    font-size:0.65rem!important;
+    text-transform:uppercase!important;
+    letter-spacing:0.05em!important;
+    transition:all 0.2s ease!important;
+    margin-left:10px!important;
+}}
+.auth-user-chip a.nav-logout-btn:hover{{
+    background-color:#ff4d001a!important;
+    border-color:#ff4d00!important;
+}}
+.auth-user-chip a.nav-theme-btn{{
+    color:var(--text-color)!important;
+    text-decoration:none!important;
+    font-size:0.9rem!important;
+    margin-left:10px!important;
+    cursor:pointer!important;
+    transition:transform 0.2s ease!important;
+}}
+.auth-user-chip a.nav-theme-btn:hover{{
+    transform:scale(1.15)!important;
+}}
+.lc-card-action-btn{{
+    color:#ff4d00!important;
+    text-decoration:none!important;
+    font-weight:600!important;
+    border:1px solid #ff4d0044!important;
+    padding:3px 8px!important;
+    border-radius:4px!important;
+    font-size:0.65rem!important;
+    text-transform:uppercase!important;
+    letter-spacing:0.05em!important;
+    transition:all 0.2s ease!important;
+}}
+.lc-card-action-btn:hover{{
+    background-color:#ff4d001a!important;
+    border-color:#ff4d00!important;
+}}
+.lc-card-action-btn.select-btn{{
+    border-color:var(--card-border)!important;
+    color:var(--text-muted)!important;
+}}
+.lc-card-action-btn.select-btn:hover{{
+    background-color:rgba(255,255,255,0.05)!important;
+    border-color:var(--text-color)!important;
+}}
+.lc-card-selected-badge{{
+    background-color:#ff4d001a!important;
+    color:#ff4d00!important;
+    border:1px solid #ff4d00!important;
+    padding:3px 8px!important;
+    border-radius:4px!important;
+    font-size:0.65rem!important;
+    text-transform:uppercase!important;
+    letter-spacing:0.05em!important;
+    font-weight:700!important;
+}}
+[data-testid="stMarkdownContainer"] span.lc-weak-tchip{{
+    display:inline-block;
+    font-size:0.62rem;
+    background:#1a0c06;
+    color:#ff4d00!important;
+    padding:2px 7px;
+    border-radius:3px;
+    border:1px solid #ff4d0022;
+    margin:2px 1px;
+    font-weight:600!important;
+}}
 </style>""", unsafe_allow_html=True)
 
 
@@ -209,15 +354,153 @@ def api(ep: str, method="GET") -> dict | None:
         st.error(f"❌ Unexpected error: {e}")
         return None
 
+css_vars = """
+:root {
+    --bg-color: #0c0c0c;
+    --text-color: #ffffff;
+    --card-bg: #111111;
+    --card-border: #1f1f1f;
+    --card-hover-bg: #141414;
+    --card-selected-bg: #150c08;
+    --card-selected-border: #ff4d00;
+    --card-idx-color: #2a2a2a;
+    --nav-bg: #0c0c0c;
+    --nav-border: #1f1f1f;
+    --hero-grad-start: rgba(12, 12, 12, 0.93);
+    --hero-grad-mid: rgba(12, 12, 12, 0.73);
+    --hero-grad-end: rgba(12, 12, 12, 0.33);
+    --hero-top-grad: #0c0c0c;
+    --text-muted: #888888;
+    --text-desc: #cccccc;
+    --search-bg: #111111;
+    --search-border: #1f1f1f;
+    --input-bg: #1a1a1a;
+    --input-border: #2a2a2a;
+    --placeholder-color: #444444;
+    --dpanel-bg: #0e0e0e;
+    --dpanel-border: #ff4d0022;
+    --stats-lbl: #444444;
+    --sec-num-color: #161616;
+    --tchip-bg: #161616;
+    --tchip-color: #666666;
+    --tchip-border: #222222;
+    --tab-list-bg: #111111;
+    --tab-list-border: #1f1f1f;
+    --tab-selected-bg: #1e1e1e;
+    --tab-unselected-color: #444444;
+    --footer-text: #222222;
+    --pillar-border: rgba(255, 255, 255, 0.08);
+    --button-sec-bg: #1f1f1f;
+    --button-sec-text: #ffffff;
+    --button-sec-hover: #2d2d2d;
+}
+"""
+plotly_text_color = "#ffffff"
+plotly_axis_color = "#cccccc"
+plotly_grid_color = "#161616"
+unsolved_pie_color = "#191919"
 
 def dc(d): return {"Easy": "lc-de", "Medium": "lc-dm", "Hard": "lc-dh"}.get(d, "lc-de")
 def pct(s, t): return round(s / t * 100, 1) if t else 0
 def H(html: str): st.markdown(html, unsafe_allow_html=True)
 
 
+import json
+
+def save_session(user):
+    try:
+        with open(".session.json", "w") as f:
+            json.dump(user, f)
+    except Exception:
+        pass
+
+def clear_session_file():
+    try:
+        if os.path.exists(".session.json"):
+            os.remove(".session.json")
+    except Exception:
+        pass
+
+
+# ── AUTH ──────────────────────────────────────────────────────────────────
+def render_auth_page():
+    _, mid, _ = st.columns([1, 1.3, 1])
+    with mid:
+        H('<div style="padding-top:6vh;">')
+        H('<div class="auth-eyebrow"><span class="lc-eyebrow-line"></span>Welcome</div>')
+        H('<div class="auth-title">LC<span class="orange">.</span>RECOMMENDER</div>')
+        H('<div class="auth-sub">Sign in to track your progress and get ranked recommendations.</div>')
+
+        tab_login, tab_signup = st.tabs(["Log In", "Sign Up"])
+
+        with tab_login:
+            with st.form("login_form", clear_on_submit=False):
+                H('<div class="auth-field-lbl">Email</div>')
+                login_email = st.text_input("email", label_visibility="collapsed", key="login_email")
+                H('<div class="auth-field-lbl">Password</div>')
+                login_pw = st.text_input("pw", type="password", label_visibility="collapsed", key="login_pw")
+                submitted = st.form_submit_button("Log In →", use_container_width=True, type="primary")
+
+            if submitted:
+                if not login_email.strip() or not login_pw:
+                    st.session_state["auth_error"] = "Enter both email and password."
+                else:
+                    with st.spinner("Logging in…"):
+                        ok, msg, user = auth_mod.sign_in(login_email.strip(), login_pw)
+                    if ok and user:
+                        st.session_state["auth_user"] = user
+                        save_session(user)
+                        st.session_state.pop("auth_error", None)
+                        st.rerun()
+                    else:
+                        st.session_state["auth_error"] = msg
+
+        with tab_signup:
+            with st.form("signup_form", clear_on_submit=False):
+                H('<div class="auth-field-lbl">Email</div>')
+                su_email = st.text_input("email2", label_visibility="collapsed", key="signup_email")
+                H('<div class="auth-field-lbl">Password</div>')
+                su_pw = st.text_input("pw2", type="password", label_visibility="collapsed", key="signup_pw")
+                H('<div class="auth-field-lbl">Confirm Password</div>')
+                su_pw2 = st.text_input("pw3", type="password", label_visibility="collapsed", key="signup_pw2")
+                su_submitted = st.form_submit_button("Create Account →", use_container_width=True, type="primary")
+
+            if su_submitted:
+                if not su_email.strip() or not su_pw:
+                    st.session_state["auth_error"] = "Enter email and password."
+                elif su_pw != su_pw2:
+                    st.session_state["auth_error"] = "Passwords don't match."
+                elif len(su_pw) < 6:
+                    st.session_state["auth_error"] = "Password must be at least 6 characters."
+                else:
+                    with st.spinner("Creating account…"):
+                        ok, msg, user = auth_mod.sign_up(su_email.strip(), su_pw)
+                    if ok:
+                        st.session_state.pop("auth_error", None)
+                        if user:
+                            st.session_state["auth_user"] = user
+                            save_session(user)
+                            st.rerun()
+                        else:
+                            st.session_state["auth_success"] = msg
+                    else:
+                        st.session_state["auth_error"] = msg
+
+        if st.session_state.get("auth_error"):
+            H(f'<div class="auth-error">⚠ {st.session_state["auth_error"]}</div>')
+        if st.session_state.get("auth_success"):
+            H(f'<div class="auth-success">✓ {st.session_state["auth_success"]}</div>')
+
+        H('</div>')
+
+
 # ── NAV ───────────────────────────────────────────────────────────────────
 def render_nav():
-    H('<div class="lc-nav"><div class="lc-nav-logo">LC<span>.</span>RECOMMENDER</div><div class="lc-nav-links"><span>Dashboard</span><span>Analytics</span><span>About</span></div><div class="lc-nav-cta">Get Started ●</div></div>')
+    import time
+    t_val = int(time.time() * 1000)
+    user = st.session_state.get("auth_user")
+    logout_html = f'<a href="/?action=logout&t={t_val}" target="_self" class="nav-logout-btn">Log Out</a>' if user else ""
+    H(f'<div class="lc-nav"><div class="lc-nav-logo">LC<span>.</span>RECOMMENDER</div><div class="lc-nav-links"><span>Dashboard</span><span>Analytics</span><span>About</span></div><div class="auth-user-chip">{logout_html}</div></div>')
 
 
 # ── HERO ──────────────────────────────────────────────────────────────────
@@ -233,7 +516,7 @@ def render_search():
     with c1:
         H('<div class="lc-search-label">Your Username</div>')
     with c2:
-        entered = st.text_input("u", value=st.session_state.get("username", ""),
+        entered = st.text_input("u", value=st.session_state.get("username") or "",
                                 placeholder="Enter LeetCode username…",
                                 label_visibility="collapsed")
     with c3:
@@ -243,10 +526,23 @@ def render_search():
     H('</div>')
 
     if clear:
-        st.session_state.clear(); st.rerun()
+        auth_user = st.session_state.get("auth_user")
+        theme = st.session_state.get("theme")
+        st.session_state.clear()
+        if auth_user:
+            st.session_state["auth_user"] = auth_user
+        if theme:
+            st.session_state["theme"] = theme
+        st.rerun()
     if go and entered.strip():
-        if st.session_state.get("username") != entered.strip():
+        if (st.session_state.get("username") or "") != entered.strip():
+            auth_user = st.session_state.get("auth_user")
+            theme = st.session_state.get("theme")
             st.session_state.clear()
+            if auth_user:
+                st.session_state["auth_user"] = auth_user
+            if theme:
+                st.session_state["theme"] = theme
         st.session_state.username = entered.strip()
         st.rerun()
 
@@ -294,34 +590,61 @@ def _rec_tab(username: str, difficulty: str | None):
     if rec["titleSlug"] not in {p["titleSlug"] for p in pool}:
         pool.insert(0, rec)
 
-    tags_html = " ".join(f'<span class="lc-tchip" style="background:#1a0c06;color:#ff4d00!important;border-color:#ff4d0022;">{t}</span>' for t in weak_tags)
-    H(f'<div class="lc-weak-bar"><span style="color:#888888!important;">📍 Targeting:</span> {tags_html}</div>')
+    tags_html = " ".join(f'<span class="lc-weak-tchip">{t}</span>' for t in weak_tags)
+    H(f'<div class="lc-weak-bar"><span style="color:var(--text-muted)!important;">📍 Targeting:</span> {tags_html}</div>')
 
     medals = ["01","02","03","04","05"]
     icons  = ["🥇","🥈","🥉","#4","#5"]
 
     for i, p in enumerate(pool[:5]):
-        sel   = st.session_state[sel_key] == i
+        sel = st.session_state[sel_key] == i
+        
+        # Action links inside card top header
+        open_link = f'<a href="https://leetcode.com/problems/{p["titleSlug"]}/" target="_blank" class="lc-card-action-btn">Open ↗</a>'
+        
+        if sel:
+            select_link = '<span class="lc-card-selected-badge">Selected</span>'
+            active_cls = "active"
+        else:
+            select_link = f'<a href="/?select={i}&diff={difficulty or "all"}" target="_self" class="lc-card-action-btn select-btn">Select</a>'
+            active_cls = ""
+
         ws    = p["weakness_score"]
         bar_w = int(ws * 100)
         t_chips = "".join(f'<span class="lc-tchip">{t}</span>' for t in p["tags"][:5])
-        ws_color = "#ff4d00" if sel else "#252525"
-        active_cls = "active" if sel else ""
+        ws_color = "#ff4d00" if sel else "#888888"
 
-        H(f'<div class="lc-rcard {active_cls}"><div class="lc-rcard-top"><div style="flex:1"><div class="lc-rcard-idx">{icons[i]} &nbsp;#{medals[i]}</div><div class="lc-rcard-title">{p["title"]}</div><div class="lc-rcard-meta"><span class="lc-dbadge {dc(p["difficulty"])}">{p["difficulty"]}</span><span class="lc-rmeta">Weakness&nbsp;{ws:.2f}</span><span class="lc-rmeta">·&nbsp;{p["acceptance_rate"]:.1f}% acceptance</span></div><div style="margin-top:0.5rem;">{t_chips}</div></div><div style="text-align:right;min-width:80px;flex-shrink:0;"><div class="lc-wsscore" style="color:{ws_color};">{bar_w}</div><div class="lc-wslbl">score</div><div class="lc-wsbar-wrap"><div class="lc-wsbar" style="width:{bar_w}%;"></div></div></div></div></div>')
-
-        c1, c2 = st.columns([3, 1])
-        with c1:
-            lbl = "✓  Selected" if sel else "▶  Select This Problem"
-            if st.button(lbl, key=f"b_{pool_key}_{i}", type="primary" if sel else "secondary", use_container_width=True):
-                st.session_state[sel_key] = i
-                st.rerun()
-        with c2:
-            st.link_button("Open ↗", f"https://leetcode.com/problems/{p['titleSlug']}/", use_container_width=True)
+        H(f'''
+        <div class="lc-rcard {active_cls}">
+            <div class="lc-rcard-top">
+                <div style="flex:1">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <div class="lc-rcard-idx">{icons[i]} &nbsp;#{medals[i]}</div>
+                        <div style="display:flex; gap:8px;">
+                            {select_link}
+                            {open_link}
+                        </div>
+                    </div>
+                    <div class="lc-rcard-title">{p["title"]}</div>
+                    <div class="lc-rcard-meta">
+                        <span class="lc-dbadge {dc(p["difficulty"])}">{p["difficulty"]}</span>
+                        <span class="lc-rmeta">Weakness&nbsp;{ws:.2f}</span>
+                        <span class="lc-rmeta">·&nbsp;{p["acceptance_rate"]:.1f}% acceptance</span>
+                    </div>
+                    <div style="margin-top:0.5rem;">{t_chips}</div>
+                </div>
+                <div style="text-align:right;min-width:80px;flex-shrink:0;margin-left:1.5rem;">
+                    <div class="lc-wsscore" style="color:{ws_color};">{bar_w}</div>
+                    <div class="lc-wslbl">score</div>
+                    <div class="lc-wsbar-wrap"><div class="lc-wsbar" style="width:{bar_w}%;"></div></div>
+                </div>
+            </div>
+        </div>
+        ''')
 
         if sel:
             all_tags = "".join(f'<span class="lc-tchip">{t}</span>' for t in p["tags"])
-            H(f'<div class="lc-dpanel"><div class="lc-dpanel-hdr">Problem Breakdown</div><div class="lc-dstats"><div><div class="lc-dstat-val">{p["acceptance_rate"]:.1f}%</div><div class="lc-dstat-lbl">Acceptance</div></div><div><div class="lc-dstat-val">{bar_w}</div><div class="lc-dstat-lbl">Weakness Score</div></div><div><div class="lc-dstat-val">{p["difficulty"][:3].upper()}</div><div class="lc-dstat-lbl">Difficulty</div></div></div><div class="lc-tags-lbl">Topics</div><div style="margin-top:0.3rem;">{all_tags}</div></div>')
+            H(f'<div class="lc-dpanel"><div class="lc-dpanel-hdr">Problem Breakdown</div><div class="lc-dstats"><div><div class="lc-dstat-val">{p["acceptance_rate"]:.1f}%</div><div class="lc-dstat-lbl">Acceptance</div></div><div><div class="lc-dstat-val">{bar_w}</div><div class="lc-dstat-lbl">Weakness Score</div></div><div><div class="lc-dstat-val">{p["difficulty"].upper()}</div><div class="lc-dstat-lbl">Difficulty</div></div></div><div class="lc-tags-lbl">Topics</div><div style="margin-top:0.3rem;">{all_tags}</div></div>')
 
 
 # ── ANALYTICS ─────────────────────────────────────────────────────────────
@@ -330,28 +653,54 @@ def render_analytics(stats: dict):
     H('<div class="lc-sec-hdr"><div class="lc-sec-num">02</div><div><div class="lc-sec-title">Skill <span>Analytics</span></div><div class="lc-sec-sub">Where you stand across all algorithmic domains</div></div></div>')
 
     ts = stats["tag_scores"]
+    
+    # ROW 1: Weakest Areas & Strongest Areas side-by-side
     col1, col2 = st.columns(2, gap="large")
 
     with col1:
-        H('<div class="lc-chart-lbl">📉 Weakest Areas</div>')
-        weakest = ts[:12]
+        H('<div class="lc-chart-lbl">📉 Weakest Areas (Top 10)</div>')
+        weakest = ts[:10]
         fig = go.Figure(go.Bar(
             x=[t["weakness_score"] for t in weakest], y=[t["tag"] for t in weakest],
             orientation="h",
             marker=dict(color=[t["weakness_score"] for t in weakest],
                         colorscale=[[0,"#22c55e"],[0.45,"#f59e0b"],[1,"#ff4d00"]], line=dict(width=0)),
-            text=[f"  {t['solved']}×" for t in weakest],
-            textposition="outside", textfont=dict(size=9, color="#333333"),
+            text=[f"  {t['solved']} solved" for t in weakest],
+            textposition="outside", textfont=dict(size=9, color=plotly_text_color),
             hovertemplate="<b>%{y}</b><br>Weakness: %{x:.2f}<extra></extra>",
         ))
         fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(l=0,r=50,t=0,b=0), height=370,
-            yaxis=dict(autorange="reversed", tickfont=dict(color="#888888",size=10), gridcolor="#111111"),
-            xaxis=dict(tickfont=dict(color="#333333",size=9), gridcolor="#161616", range=[0,1.2]),
+            margin=dict(l=0,r=70,t=10,b=10), height=320,
+            yaxis=dict(autorange="reversed", tickfont=dict(color=plotly_axis_color,size=10), gridcolor="rgba(0,0,0,0)"),
+            xaxis=dict(tickfont=dict(color=plotly_axis_color,size=9), gridcolor=plotly_grid_color, range=[0,1.3]),
         )
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     with col2:
+        H('<div class="lc-chart-lbl">💪 Strongest Areas (Top 10)</div>')
+        strongest = list(reversed(ts[-10:]))
+        fig2 = go.Figure(go.Bar(
+            x=[t["strength_score"] for t in strongest], y=[t["tag"] for t in strongest],
+            orientation="h",
+            marker=dict(color=[t["strength_score"] for t in strongest],
+                        colorscale=[[0,unsolved_pie_color],[1,"#ff4d00"]], line=dict(width=0)),
+            text=[f"  {t['solved']} solved" for t in strongest],
+            textposition="outside", textfont=dict(size=9, color=plotly_text_color),
+            hovertemplate="<b>%{y}</b><br>Strength: %{x:.2f}<extra></extra>",
+        ))
+        fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            margin=dict(l=0,r=70,t=10,b=10), height=320,
+            yaxis=dict(autorange="reversed", tickfont=dict(color=plotly_axis_color,size=10), gridcolor="rgba(0,0,0,0)"),
+            xaxis=dict(tickfont=dict(color=plotly_axis_color,size=9), gridcolor=plotly_grid_color, range=[0,1.3]),
+        )
+        st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
+
+    H('<div style="margin-top: 2rem;"></div>')
+
+    # ROW 2: Skill Radar & Completion Progress side-by-side
+    col3, col4 = st.columns(2, gap="large")
+
+    with col3:
         H('<div class="lc-chart-lbl">🕸 Skill Radar — Top 8 Topics</div>')
         top8 = sorted(ts, key=lambda x: x["solved"], reverse=True)[:8]
         labs = [t["tag"] for t in top8] + [top8[0]["tag"]]
@@ -365,55 +714,39 @@ def render_analytics(stats: dict):
         ))
         fig3.update_layout(paper_bgcolor="rgba(0,0,0,0)",
             polar=dict(bgcolor="rgba(0,0,0,0)",
-                radialaxis=dict(visible=True, range=[0,1], tickfont=dict(color="#222222",size=8), gridcolor="#1a1a1a", linecolor="#1a1a1a"),
-                angularaxis=dict(tickfont=dict(color="#888888",size=9), gridcolor="#1a1a1a", linecolor="#1a1a1a"),
+                radialaxis=dict(visible=True, range=[0,1], tickfont=dict(color=plotly_axis_color,size=8), gridcolor=plotly_grid_color, linecolor=plotly_grid_color),
+                angularaxis=dict(tickfont=dict(color=plotly_axis_color,size=9), gridcolor=plotly_grid_color, linecolor=plotly_grid_color),
             ),
-            margin=dict(l=50,r=50,t=20,b=20), height=370,
+            margin=dict(l=50,r=50,t=20,b=20), height=320,
         )
         st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar": False})
 
-    H('<div class="lc-chart-lbl" style="margin-top:1.5rem;">📊 Completion Progress</div>')
-    sc, ta = stats["solve_counts"], stats["total_available"]
-    dcols = st.columns(3)
-    for col, (d, color) in zip(dcols, [("Easy","#22c55e"),("Medium","#f59e0b"),("Hard","#ef4444")]):
-        s, t = sc.get(d, 0), ta.get(d, 1)
-        p = pct(s, t)
-        with col:
-            fig = go.Figure(go.Pie(
-                values=[s, max(0, t-s)], hole=0.74,
-                marker_colors=[color,"#191919"], textinfo="none",
-                hovertemplate="%{label}: %{value}<extra></extra>",
-            ))
-            fig.update_layout(showlegend=False, margin=dict(l=5,r=5,t=5,b=5), height=155,
-                paper_bgcolor="rgba(0,0,0,0)",
-                annotations=[{"text":f"<b>{p}%</b>","x":0.5,"y":0.5,"font":{"size":18,"color":color,"family":"Bebas Neue"},"showarrow":False}],
-            )
-            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-            H(f'<div style="text-align:center;margin-top:-0.8rem;"><span style="font-size:0.7rem;font-weight:700;color:{color}!important;text-transform:uppercase;letter-spacing:0.08em;">{d}</span><br><span style="font-size:0.68rem;color:#333333!important;">{s:,} / {t:,}</span></div>')
+    with col4:
+        H('<div class="lc-chart-lbl">📊 Completion Progress</div>')
+        sc, ta = stats["solve_counts"], stats["total_available"]
+        dcols = st.columns(3)
+        for col, (d, color) in zip(dcols, [("Easy","#22c55e"),("Medium","#f59e0b"),("Hard","#ef4444")]):
+            s, t = sc.get(d, 0), ta.get(d, 1)
+            p = pct(s, t)
+            with col:
+                fig = go.Figure(go.Pie(
+                    values=[s, max(0, t-s)], hole=0.74,
+                    marker_colors=[color,unsolved_pie_color], textinfo="none",
+                    hovertemplate="%{label}: %{value}<extra></extra>",
+                ))
+                fig.update_layout(showlegend=False, margin=dict(l=5,r=5,t=5,b=5), height=140,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    annotations=[{"text":f"<b>{p}%</b>","x":0.5,"y":0.5,"font":{"size":18,"color":color,"family":"Bebas Neue"},"showarrow":False}],
+                )
+                st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+                H(f'<div style="text-align:center;margin-top:-0.5rem;"><span style="font-size:0.75rem;font-weight:700;color:{color}!important;text-transform:uppercase;letter-spacing:0.08em;">{d}</span><br><span style="font-size:0.75rem;color:var(--text-muted)!important;font-weight:500;">{s:,} / {t:,}</span></div>')
 
-    H('<div class="lc-chart-lbl" style="margin-top:1.8rem;">💪 Strongest Areas</div>')
-    strongest = list(reversed(ts[-10:]))
-    fig2 = go.Figure(go.Bar(
-        x=[t["strength_score"] for t in strongest], y=[t["tag"] for t in strongest],
-        orientation="h",
-        marker=dict(color=[t["strength_score"] for t in strongest],
-                    colorscale=[[0,"#1a1a1a"],[1,"#ff4d00"]], line=dict(width=0)),
-        text=[f"  {t['solved']}×" for t in strongest],
-        textposition="outside", textfont=dict(size=9, color="#333333"),
-        hovertemplate="<b>%{y}</b><br>Strength: %{x:.2f}<extra></extra>",
-    ))
-    fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=0,r=50,t=0,b=0), height=290,
-        yaxis=dict(autorange="reversed", tickfont=dict(color="#888888",size=10)),
-        xaxis=dict(tickfont=dict(color="#333333",size=9), gridcolor="#161616", range=[0,1.2]),
-    )
-    st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
     H('</div>')
 
 
 # ── REFRESH ───────────────────────────────────────────────────────────────
 def render_refresh(username: str):
-    H('<div style="padding:1.5rem 4rem;border-bottom:1px solid #1f1f1f;background:#0c0c0c;">')
+    H('<div style="padding:1.5rem 4rem;border-bottom:1px solid var(--card-border);background:var(--bg-color);">')
     _, mid, _ = st.columns([4, 2, 4])
     with mid:
         if st.button("🔄  Refresh LeetCode Data", use_container_width=True, type="primary"):
@@ -435,13 +768,53 @@ def render_footer():
 
 # ── MAIN ──────────────────────────────────────────────────────────────────
 def main():
-    username = st.session_state.get("username", "").strip()
+    # Auto-load session from cache if not present in session_state
+    if "auth_user" not in st.session_state and os.path.exists(".session.json"):
+        try:
+            with open(".session.json", "r") as f:
+                st.session_state["auth_user"] = json.load(f)
+        except Exception:
+            pass
+
+    # Handle HTML logout redirect action
+    if st.query_params.get("action") == "logout":
+        st.query_params.clear()
+        user = st.session_state.get("auth_user")
+        auth_mod.sign_out(user.get("access_token") if user else None)
+        st.session_state.clear()
+        clear_session_file()
+        st.rerun()
+
+    # Handle HTML theme toggle redirect action
+    # Handle HTML logout redirect action
+    if st.query_params.get("action") == "logout":
+        st.query_params.clear()
+        user = st.session_state.get("auth_user")
+        auth_mod.sign_out(user.get("access_token") if user else None)
+        st.session_state.clear()
+        clear_session_file()
+        st.rerun()
+
+    if "auth_user" not in st.session_state:
+        render_auth_page()
+        return
+
+    # Handle HTML problem selection redirect
+    if "select" in st.query_params:
+        username = (st.session_state.get("username") or "").strip()
+        diff = st.query_params.get("diff", "all")
+        sel_key = f"sel_{username}_{diff}"
+        st.session_state[sel_key] = int(st.query_params["select"])
+        st.query_params.clear()
+        st.rerun()
+
+    username = (st.session_state.get("username") or "").strip()
     render_nav()
     render_hero(username or None)
     render_search()
 
     if not username:
-        H('<div style="text-align:center;padding:5rem 2rem;border-bottom:1px solid #1f1f1f;background:#0c0c0c;"><div style="font-family:Bebas Neue,sans-serif;font-size:5rem;color:#161616;line-height:1;">ENTER USERNAME ABOVE</div><div style="font-size:0.82rem;color:#2a2a2a;margin-top:0.6rem;">First load takes ~15–25 s · Results cached 10 minutes</div></div>')
+        H('<div style="text-align:center;padding:5rem 2rem;border-bottom:1px solid var(--card-border);background:var(--bg-color);"><div style="font-family:Bebas Neue,sans-serif;font-size:5rem;color:var(--sec-num-color);line-height:1;">ENTER USERNAME ABOVE</div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.6rem;">First load takes ~15–25 s · Results cached 10 minutes</div></div>')
         render_footer()
         return
 
