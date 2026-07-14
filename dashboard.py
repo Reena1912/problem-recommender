@@ -11,9 +11,6 @@ load_dotenv()
 
 import os
 import json
-import auth as auth_mod
-import importlib
-importlib.reload(auth_mod)
 
 API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000")
 
@@ -407,100 +404,9 @@ def H(html: str): st.markdown(html, unsafe_allow_html=True)
 
 import json
 
-def save_session(user):
-    try:
-        with open(".session.json", "w") as f:
-            json.dump(user, f)
-    except Exception:
-        pass
-
-def clear_session_file():
-    try:
-        if os.path.exists(".session.json"):
-            os.remove(".session.json")
-    except Exception:
-        pass
-
-
-# ── AUTH ──────────────────────────────────────────────────────────────────
-def render_auth_page():
-    _, mid, _ = st.columns([1, 1.3, 1])
-    with mid:
-        H('<div style="padding-top:6vh;">')
-        H('<div class="auth-eyebrow"><span class="lc-eyebrow-line"></span>Welcome</div>')
-        H('<div class="auth-title">LC<span class="orange">.</span>RECOMMENDER</div>')
-        H('<div class="auth-sub">Sign in to track your progress and get ranked recommendations.</div>')
-
-        tab_login, tab_signup = st.tabs(["Log In", "Sign Up"])
-
-        with tab_login:
-            with st.form("login_form", clear_on_submit=False):
-                H('<div class="auth-field-lbl">Email</div>')
-                login_email = st.text_input("email", label_visibility="collapsed", key="login_email")
-                H('<div class="auth-field-lbl">Password</div>')
-                login_pw = st.text_input("pw", type="password", label_visibility="collapsed", key="login_pw")
-                submitted = st.form_submit_button("Log In →", use_container_width=True, type="primary")
-
-            if submitted:
-                if not login_email.strip() or not login_pw:
-                    st.session_state["auth_error"] = "Enter both email and password."
-                else:
-                    with st.spinner("Logging in…"):
-                        ok, msg, user = auth_mod.sign_in(login_email.strip(), login_pw)
-                    if ok and user:
-                        st.session_state["auth_user"] = user
-                        save_session(user)
-                        st.session_state.pop("auth_error", None)
-                        st.rerun()
-                    else:
-                        st.session_state["auth_error"] = msg
-
-        with tab_signup:
-            with st.form("signup_form", clear_on_submit=False):
-                H('<div class="auth-field-lbl">Email</div>')
-                su_email = st.text_input("email2", label_visibility="collapsed", key="signup_email")
-                H('<div class="auth-field-lbl">Password</div>')
-                su_pw = st.text_input("pw2", type="password", label_visibility="collapsed", key="signup_pw")
-                H('<div class="auth-field-lbl">Confirm Password</div>')
-                su_pw2 = st.text_input("pw3", type="password", label_visibility="collapsed", key="signup_pw2")
-                su_submitted = st.form_submit_button("Create Account →", use_container_width=True, type="primary")
-
-            if su_submitted:
-                if not su_email.strip() or not su_pw:
-                    st.session_state["auth_error"] = "Enter email and password."
-                elif su_pw != su_pw2:
-                    st.session_state["auth_error"] = "Passwords don't match."
-                elif len(su_pw) < 6:
-                    st.session_state["auth_error"] = "Password must be at least 6 characters."
-                else:
-                    with st.spinner("Creating account…"):
-                        ok, msg, user = auth_mod.sign_up(su_email.strip(), su_pw)
-                    if ok:
-                        st.session_state.pop("auth_error", None)
-                        if user:
-                            st.session_state["auth_user"] = user
-                            save_session(user)
-                            st.rerun()
-                        else:
-                            st.session_state["auth_success"] = msg
-                    else:
-                        st.session_state["auth_error"] = msg
-
-        if st.session_state.get("auth_error"):
-            H(f'<div class="auth-error">⚠ {st.session_state["auth_error"]}</div>')
-        if st.session_state.get("auth_success"):
-            H(f'<div class="auth-success">✓ {st.session_state["auth_success"]}</div>')
-
-        H('</div>')
-
-
 # ── NAV ───────────────────────────────────────────────────────────────────
 def render_nav():
-    import time
-    t_val = int(time.time() * 1000)
-    user = st.session_state.get("auth_user")
-    logout_html = f'<a href="/?action=logout&t={t_val}" target="_self" class="nav-logout-btn">Log Out</a>' if user else ""
-    H(f'<div class="lc-nav"><div class="lc-nav-logo">LC<span>.</span>RECOMMENDER</div><div class="lc-nav-links"><span>Dashboard</span><span>Analytics</span><span>About</span></div><div class="auth-user-chip">{logout_html}</div></div>')
+    H(f'<div class="lc-nav"><div class="lc-nav-logo">LC<span>.</span>RECOMMENDER</div><div class="lc-nav-links"><span>Dashboard</span><span>Analytics</span><span>About</span></div></div>')
 
 
 # ── HERO ──────────────────────────────────────────────────────────────────
@@ -766,39 +672,8 @@ def render_footer():
     H('<div class="lc-footer"><div class="lc-footer-logo">LC<span>.</span>RECOMMENDER</div><div class="lc-footer-copy">Data from LeetCode GraphQL API · Weakness-Score Ranking · Built with ⚡</div></div>')
 
 
-# ── MAIN ──────────────────────────────────────────────────────────────────
+# ── MAIN ───────────────────────────────────
 def main():
-    # Auto-load session from cache if not present in session_state
-    if "auth_user" not in st.session_state and os.path.exists(".session.json"):
-        try:
-            with open(".session.json", "r") as f:
-                st.session_state["auth_user"] = json.load(f)
-        except Exception:
-            pass
-
-    # Handle HTML logout redirect action
-    if st.query_params.get("action") == "logout":
-        st.query_params.clear()
-        user = st.session_state.get("auth_user")
-        auth_mod.sign_out(user.get("access_token") if user else None)
-        st.session_state.clear()
-        clear_session_file()
-        st.rerun()
-
-    # Handle HTML theme toggle redirect action
-    # Handle HTML logout redirect action
-    if st.query_params.get("action") == "logout":
-        st.query_params.clear()
-        user = st.session_state.get("auth_user")
-        auth_mod.sign_out(user.get("access_token") if user else None)
-        st.session_state.clear()
-        clear_session_file()
-        st.rerun()
-
-    if "auth_user" not in st.session_state:
-        render_auth_page()
-        return
-
     # Handle HTML problem selection redirect
     if "select" in st.query_params:
         username = (st.session_state.get("username") or "").strip()

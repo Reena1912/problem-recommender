@@ -28,7 +28,7 @@ def sign_up(email: str, password: str) -> tuple[bool, str, Optional[dict]]:
     """Create a new account. Returns (success, message, user_dict)."""
     client = _client()
     if client is None:
-        return False, "Auth isn't configured — set SUPABASE_URL and SUPABASE_ANON_KEY in .env.", None
+        return False, "Auth isn't configured — set SUPABASE_URL and SUPABASE_ANON_KEY in your local .env or Streamlit Secrets.", None
     try:
         res = client.auth.sign_up({
             "email": email,
@@ -56,7 +56,7 @@ def sign_in(email: str, password: str) -> tuple[bool, str, Optional[dict]]:
     """Log in an existing account. Returns (success, message, user_dict)."""
     client = _client()
     if client is None:
-        return False, "Auth isn't configured — set SUPABASE_URL and SUPABASE_ANON_KEY in .env.", None
+        return False, "Auth isn't configured — set SUPABASE_URL and SUPABASE_ANON_KEY in your local .env or Streamlit Secrets.", None
     try:
         res = client.auth.sign_in_with_password({"email": email, "password": password})
         if res.user is None or res.session is None:
