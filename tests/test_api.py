@@ -40,11 +40,12 @@ def mock_pipeline_result():
     }
 
 def test_root_endpoint(test_client):
-    """Test the root endpoint returns HTML web UI."""
+    """Test the root endpoint returns API status and usage info."""
     response = test_client.get("/")
     assert response.status_code == 200
-    assert "<!DOCTYPE html>" in response.text
-    assert "AlgoMatch" in response.text
+    data = response.json()
+    assert "message" in data
+    assert "endpoints" in data
 
 def test_recommend_success(test_client, mock_pipeline_result):
     """Test the general /recommend endpoint returns top priority recommendation."""

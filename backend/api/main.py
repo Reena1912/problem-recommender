@@ -83,9 +83,15 @@ from api.routes import router  # noqa: E402 (import after app is defined)
 app.include_router(router)
 
 
-from fastapi.responses import HTMLResponse
-from api.ui_html import HTML_UI_CONTENT
-
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 def root():
-    return HTMLResponse(content=HTML_UI_CONTENT)
+    return {
+        "message": "AlgoMatch API",
+        "usage": "Add ?username=your_leetcode_username to any endpoint",
+        "endpoints": {
+            "recommend (any difficulty)": "/recommend?username=<user>",
+            "recommend by difficulty":    "/recommend/{easy|medium|hard}?username=<user>",
+            "stats (charts data)":        "/stats?username=<user>",
+            "docs":                        "/docs",
+        },
+    }
