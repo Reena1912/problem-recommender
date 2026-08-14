@@ -33,36 +33,52 @@ An intelligent, production-ready system that analyzes any LeetCode profile, iden
 ##  System Architecture
 
 ```
+##  System Architecture
+
+```
 problem-recommender-system/
-├── api/
-│   ├── main.py              # FastAPI Entry Point (loads 3,900+ problems at startup)
-│   ├── routes.py            # HTTP Endpoints (/recommend, /stats, /update, /admin/*)
-│   ├── auth.py              # Token validation helper dependencies
-│   ├── tracker.py           # Database interface logging user activity to Supabase
-│   ├── schemas.py           # Pydantic validation & response models
-│   └── user_pipeline.py     # ETL Orchestration + 10-minute local TTL caching
+├── backend/                  # Backend Service & Machine Learning Layer
+│   ├── api/
+│   │   ├── main.py           # FastAPI Entry Point (loads 3,900+ problems catalog at startup)
+│   │   ├── routes.py         # HTTP Endpoints (/recommend, /stats, /subscribe, /update)
+│   │   ├── newsletter.py     # Newsletter subscription handler & SMTP dispatcher
+│   │   ├── tracker.py        # Database interface logging user activity to Supabase
+│   │   ├── schemas.py        # Pydantic validation & response models
+│   │   └── user_pipeline.py  # ETL Orchestration + 10-minute local TTL caching
+│   ├── scraper/
+│   │   ├── fetch_profile.py  # LeetCode GraphQL Client (with retry backoff)
+│   │   ├── parse_submissions.py # Raw JSON parser and tag mapper
+│   │   └── tag_analyzer.py   # Core weakness calculation calculations
+│   ├── model/
+│   │   ├── weakness_scorer.py# Ranks problems based on tag scores
+│   │   ├── problem_ranker.py # Ranks unsolved problems
+│   │   └── model.pkl         # Machine learning model artifact
+│   ├── data/
+│   │   ├── problems_catalog.json # Cached global problems catalog (3,900+ problems)
+│   │   ├── subscribers.json  # Saved email subscribers dataset
+│   │   └── database_schema.sql # Supabase SQL schema
+│   └── config.py             # Environment configurations loader
 │
-├── scraper/
-│   ├── fetch_profile.py     # LeetCode GraphQL Client (with retry backoff)
-│   ├── parse_submissions.py # Raw JSON parser and tag mapper
-│   └── tag_analyzer.py      # Core weakness calculation calculations
+├── frontend/                 # Frontend Web Application Layer
+│   ├── dashboard.py          # Streamlit organic sage & forest green UI application
+│   └── ui/
+│       ├── analytics.py      # Plotly interactive charts & data visualization
+│       ├── client.py         # Fast sub-second @st.cache_data API client
+│       ├── components.py     # Nav bar, hero section, process cards & stat cards
+│       ├── recommendations.py# Recommendation problem cards & detail panels
+│       └── styles.py         # Custom typography & design system stylesheet
 │
-├── model/
-│   ├── weakness_scorer.py   # Ranks problems based on tag scores
-│   └── problem_ranker.py    # Ranks unsolved problems
-│
-├── data/
-│   └── problems_catalog.json # Cached global problems catalog (JSON format)
-│
-├── dashboard.py             # Streamlit bold editorial user interface
-├── config.py                # Environment configurations loader
-├── requirements.txt         # Pinned python packages
-└── .env                     # Local credentials (never committed)
+├── tests/                    # Pytest Integration & Unit Test Suite
+├── Dockerfile                # Container deployment build spec
+├── docker-compose.yml        # Docker composition setup
+├── render.yaml               # Render cloud deployment specification
+├── requirements.txt          # Pinned Python dependencies
+└── .env                      # Local environment secrets
 ```
 
 ### Request Flow Diagram
 ```
-User types LeetCode username on Streamlit Cloud
+User types LeetCode username on Streamlit Web App
                        ↓
          Streamlit sends HTTP Request
          GET /recommend?username=username
@@ -115,6 +131,7 @@ All routes accept `?username=<leetcode_username>`. If omitted, they fall back to
 | `GET` | `/recommend/medium` | None | Top Medium recommendation |
 | `GET` | `/recommend/hard` | None | Top Hard recommendation |
 | `GET` | `/stats` | None | User solved counts, totals, and tag scores |
+| `POST` | `/subscribe` | None | Registers email newsletter subscription |
 | `POST` | `/update` | None | Purges cache and forces profile re-scrape |
 | `POST` | `/admin/refresh-catalog` | `X-Admin-Secret` | Triggers background global problem catalog refresh |
 | `GET` | `/admin/users` | `X-Admin-Secret` | Returns logged statistics for all users |
@@ -152,13 +169,13 @@ pip install -r requirements.txt
 ### 3. Run the Services
 **Terminal 1 (Backend API)**:
 ```bash
-uvicorn api.main:app --reload
+python -m uvicorn backend.api.main:app --reload
 ```
 *(On the first run, the API will take ~30 seconds to download and cache the global 3,900+ problem catalog from LeetCode).*
 
-**Terminal 2 (Streamlit Dashboard)**:
+**Terminal 2 (Streamlit Frontend Dashboard)**:
 ```bash
-streamlit run dashboard.py
+python -m streamlit run frontend/dashboard.py
 ```
 
 

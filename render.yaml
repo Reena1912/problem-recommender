@@ -1,11 +1,11 @@
 services:
   - type: web
-    name: leetcode-recommender-api
+    name: algomatch-api
     env: python
     runtime: python
     pythonVersion: "3.11.9"
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn backend.api.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: LEETCODE_SESSION
         sync: false
@@ -13,12 +13,12 @@ services:
         sync: false
 
   - type: web
-    name: leetcode-recommender-dashboard
+    name: algomatch-dashboard
     env: python
     runtime: python
     pythonVersion: "3.11.9"
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run dashboard.py \
+    startCommand: streamlit run frontend/dashboard.py \
      --server.port $PORT \
      --server.address 0.0.0.0 \
      --server.headless true \
