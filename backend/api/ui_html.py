@@ -82,7 +82,7 @@ HTML_UI_CONTENT = """<!DOCTYPE html>
 
         /* Hero */
         .lc-hero-section {
-            padding: 4rem 0 3rem;
+            padding: 4rem 0 2.5rem;
         }
         .lc-eyebrow {
             display: flex;
@@ -170,6 +170,38 @@ HTML_UI_CONTENT = """<!DOCTYPE html>
         .lc-search-btn:hover {
             background: #0b1d19;
             transform: translateY(-1px);
+        }
+
+        /* Initial Placeholder */
+        .lc-initial-card {
+            background: var(--card-bg);
+            border: 1px dashed #c4d7cc;
+            border-radius: 24px;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .lc-initial-icon {
+            font-size: 2.8rem;
+            margin-bottom: 0.8rem;
+        }
+        .lc-initial-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--forest-green);
+            margin-bottom: 0.4rem;
+        }
+        .lc-initial-sub {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        /* Hidden Results Container */
+        #results-container {
+            display: none;
         }
 
         /* Stats Grid */
@@ -412,85 +444,95 @@ HTML_UI_CONTENT = """<!DOCTYPE html>
             <div class="lc-search-title">Analyze Any LeetCode Profile</div>
             <div class="lc-search-sub">Enter a username below to calculate weakness scores across 40+ algorithmic topics.</div>
             <form class="lc-search-form" id="search-form">
-                <input type="text" id="username-input" class="lc-search-input" placeholder="e.g. neetcode, tourist, or NovaAsher…" value="neetcode">
+                <input type="text" id="username-input" class="lc-search-input" placeholder="e.g. neetcode, tourist, or NovaAsher…" value="">
                 <button type="submit" class="lc-search-btn">Analyze Profile →</button>
             </form>
         </div>
 
-        <!-- STATS COUNTERS -->
-        <div class="lc-stats-grid">
-            <div class="lc-stat-card">
-                <div class="lc-stat-hdr">
-                    <div class="lc-stat-title">Total Solved</div>
-                    <div class="lc-stat-badge" style="background:#e8f4ec;color:#16a34a;" id="st-tot-pct">0%</div>
+        <!-- INITIAL PLACEHOLDER -->
+        <div class="lc-initial-card" id="initial-prompt">
+            <div class="lc-initial-icon">🎯</div>
+            <div class="lc-initial-title">Ready to Analyze Your Profile</div>
+            <div class="lc-initial-sub">Type any LeetCode username into the box above and click <b style="color:var(--forest-green);">Analyze Profile →</b> to view skill analytics and target recommendations.</div>
+        </div>
+
+        <!-- HIDDEN RESULTS UNTIL USER SEARCHES -->
+        <div id="results-container">
+            <!-- STATS COUNTERS -->
+            <div class="lc-stats-grid">
+                <div class="lc-stat-card">
+                    <div class="lc-stat-hdr">
+                        <div class="lc-stat-title">Total Solved</div>
+                        <div class="lc-stat-badge" style="background:#e8f4ec;color:#16a34a;" id="st-tot-pct">0%</div>
+                    </div>
+                    <div class="lc-stat-val" id="st-tot-val">0</div>
+                    <div class="lc-stat-sub" id="st-tot-sub">out of 3,900+ problems</div>
                 </div>
-                <div class="lc-stat-val" id="st-tot-val">0</div>
-                <div class="lc-stat-sub" id="st-tot-sub">out of 3,900+ problems</div>
-            </div>
-            <div class="lc-stat-card">
-                <div class="lc-stat-hdr">
-                    <div class="lc-stat-title">Easy Solved</div>
-                    <div class="lc-stat-badge" style="background:#dcfce7;color:#16a34a;" id="st-ez-pct">0%</div>
+                <div class="lc-stat-card">
+                    <div class="lc-stat-hdr">
+                        <div class="lc-stat-title">Easy Solved</div>
+                        <div class="lc-stat-badge" style="background:#dcfce7;color:#16a34a;" id="st-ez-pct">0%</div>
+                    </div>
+                    <div class="lc-stat-val" id="st-ez-val">0</div>
+                    <div class="lc-stat-sub" id="st-ez-sub">out of 950+ easy</div>
                 </div>
-                <div class="lc-stat-val" id="st-ez-val">0</div>
-                <div class="lc-stat-sub" id="st-ez-sub">out of 950+ easy</div>
-            </div>
-            <div class="lc-stat-card">
-                <div class="lc-stat-hdr">
-                    <div class="lc-stat-title">Medium Solved</div>
-                    <div class="lc-stat-badge" style="background:#fef3c7;color:#d97706;" id="st-md-pct">0%</div>
+                <div class="lc-stat-card">
+                    <div class="lc-stat-hdr">
+                        <div class="lc-stat-title">Medium Solved</div>
+                        <div class="lc-stat-badge" style="background:#fef3c7;color:#d97706;" id="st-md-pct">0%</div>
+                    </div>
+                    <div class="lc-stat-val" id="st-md-val">0</div>
+                    <div class="lc-stat-sub" id="st-md-sub">out of 2,000+ medium</div>
                 </div>
-                <div class="lc-stat-val" id="st-md-val">0</div>
-                <div class="lc-stat-sub" id="st-md-sub">out of 2,000+ medium</div>
-            </div>
-            <div class="lc-stat-card">
-                <div class="lc-stat-hdr">
-                    <div class="lc-stat-title">Hard Solved</div>
-                    <div class="lc-stat-badge" style="background:#fee2e2;color:#dc2626;" id="st-hd-pct">0%</div>
+                <div class="lc-stat-card">
+                    <div class="lc-stat-hdr">
+                        <div class="lc-stat-title">Hard Solved</div>
+                        <div class="lc-stat-badge" style="background:#fee2e2;color:#dc2626;" id="st-hd-pct">0%</div>
+                    </div>
+                    <div class="lc-stat-val" id="st-hd-val">0</div>
+                    <div class="lc-stat-sub" id="st-hd-sub">out of 950+ hard</div>
                 </div>
-                <div class="lc-stat-val" id="st-hd-val">0</div>
-                <div class="lc-stat-sub" id="st-hd-sub">out of 950+ hard</div>
             </div>
-        </div>
 
-        <!-- ANALYTICS SECTION -->
-        <div class="lc-sec-hdr" id="analytics">
-            <div class="lc-sec-num">01</div>
-            <div>
-                <div class="lc-sec-title">Skill Analytics & Practice Targets</div>
-                <div class="lc-sec-sub">Simple breakdown of your weakest topics and difficulty progress</div>
+            <!-- ANALYTICS SECTION -->
+            <div class="lc-sec-hdr" id="analytics">
+                <div class="lc-sec-num">01</div>
+                <div>
+                    <div class="lc-sec-title">Skill Analytics & Practice Targets</div>
+                    <div class="lc-sec-sub">Simple breakdown of your weakest topics and difficulty progress</div>
+                </div>
             </div>
-        </div>
 
-        <div class="lc-analytics-grid">
-            <div class="lc-chart-card">
-                <div class="lc-chart-title">📉 Top Topics Needing Practice</div>
-                <canvas id="barChart" height="220"></canvas>
+            <div class="lc-analytics-grid">
+                <div class="lc-chart-card">
+                    <div class="lc-chart-title">📉 Top Topics Needing Practice</div>
+                    <canvas id="barChart" height="220"></canvas>
+                </div>
+                <div class="lc-chart-card">
+                    <div class="lc-chart-title">🍰 Solved Problems by Difficulty</div>
+                    <canvas id="donutChart" height="220"></canvas>
+                </div>
             </div>
-            <div class="lc-chart-card">
-                <div class="lc-chart-title">🍰 Solved Problems by Difficulty</div>
-                <canvas id="donutChart" height="220"></canvas>
+
+            <!-- RECOMMENDATIONS SECTION -->
+            <div class="lc-sec-hdr">
+                <div class="lc-sec-num">02</div>
+                <div>
+                    <div class="lc-sec-title">Recommended Challenges</div>
+                    <div class="lc-sec-sub">Ranked by how directly they target your top algorithmic skill gaps</div>
+                </div>
             </div>
-        </div>
 
-        <!-- RECOMMENDATIONS SECTION -->
-        <div class="lc-sec-hdr">
-            <div class="lc-sec-num">02</div>
-            <div>
-                <div class="lc-sec-title">Recommended Challenges</div>
-                <div class="lc-sec-sub">Ranked by how directly they target your top algorithmic skill gaps</div>
+            <div class="lc-rec-tabs">
+                <button class="lc-tab-btn active" data-diff="all">✦ All Recommendations</button>
+                <button class="lc-tab-btn" data-diff="easy">🟢 Easy Problems</button>
+                <button class="lc-tab-btn" data-diff="medium">🟠 Medium Problems</button>
+                <button class="lc-tab-btn" data-diff="hard">🔴 Hard Problems</button>
             </div>
-        </div>
 
-        <div class="lc-rec-tabs">
-            <button class="lc-tab-btn active" data-diff="all">✦ All Recommendations</button>
-            <button class="lc-tab-btn" data-diff="easy">🟢 Easy Problems</button>
-            <button class="lc-tab-btn" data-diff="medium">🟠 Medium Problems</button>
-            <button class="lc-tab-btn" data-diff="hard">🔴 Hard Problems</button>
-        </div>
-
-        <div id="recommendations-container">
-            <div style="text-align:center;padding:2rem;color:var(--text-muted);">Loading recommendations…</div>
+            <div id="recommendations-container">
+                <div style="text-align:center;padding:2rem;color:var(--text-muted);">Loading recommendations…</div>
+            </div>
         </div>
 
     </div>
@@ -511,6 +553,9 @@ HTML_UI_CONTENT = """<!DOCTYPE html>
         let activeDiff = 'all';
 
         async function fetchUserData(username) {
+            document.getElementById('initial-prompt').style.display = 'none';
+            document.getElementById('results-container').style.display = 'block';
+
             try {
                 // Fetch stats
                 const statsRes = await fetch(`/stats?username=${encodeURIComponent(username)}`);
@@ -665,9 +710,6 @@ HTML_UI_CONTENT = """<!DOCTYPE html>
                 if (username) loadRecommendations(username, activeDiff);
             });
         });
-
-        // Initial Load Demo
-        fetchUserData('neetcode');
     </script>
 </body>
 </html>
