@@ -1,187 +1,190 @@
 <div align="center">
 
-#  LeetCode Recommender 
+# ⚡ AlgoMatch — Algorithmic Skill Optimizer
 
 **Stop grinding blindly. Target your exact skill gaps.**
 
-An intelligent, production-ready system that analyzes any LeetCode profile, identifies algorithmic blind spots, and recommends the most impactful problems to solve next — backed by data-driven weakness scoring.
+An intelligent, data-driven platform that analyzes any LeetCode profile, pinpoints algorithmic blind spots across 40+ topics, and recommends the highest-impact problems to solve next.
 
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.39-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
-[![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.39-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-**[ Live Dashboard](https://problem-recommender-dashboard.streamlit.app/)** &nbsp;|&nbsp; **[ Interactive API Docs](https://leetcode-recommender-api.onrender.com/docs)**
+<br/>
+
+[🌐 Live Web Platform](https://problem-recommender.vercel.app) &nbsp;•&nbsp; [⚡ Streamlit Dashboard](http://localhost:8501) &nbsp;•&nbsp; [📖 Interactive API Docs](https://problem-recommender.vercel.app/docs)
 
 </div>
 
 ---
 
-##  Key Features
+## 🎯 Key Features
 
-* **Data-Driven Weakness Scoring**: Calculates a weakness coefficient for every algorithmic tag (0.0 to 1.0) based on your solved ratio relative to your strengths.
-* **Instant Recommendations**: Ranks 3,900+ LeetCode problems and serves the top Easy, Medium, or Hard problem targeting your specific gap.
-* **Visual Analytics**: Interactive radar charts, weakness bars, and pie charts powered by Plotly.
-* **Startup Catalog Caching**: Pre-fetches and caches the global LeetCode problem catalog at startup to achieve sub-second backend load times.
-* **Asynchronous Database Logging**: Logs user activity and stats to Supabase using FastAPI `BackgroundTasks` to prevent database latency from blocking the frontend.
-* **Resilient Scraping**: Scrapers are protected with custom `User-Agent` headers and exponential backoff retry policies to bypass LeetCode's rate-limiting (HTTP 429).
-* **Secure Admin Operations**: Admin endpoints for catalog refreshes and user auditing are locked behind secure `X-Admin-Secret` headers.
+- **📊 Data-Driven Weakness Scoring**: Calculates a normalized weakness coefficient ($0.0 \rightarrow 1.0$) for 40+ algorithmic topics relative to your top strengths.
+- **🎯 Precision Problem Ranking**: Ranks 3,900+ LeetCode problems in real time and surfaces the highest-value Easy, Medium, or Hard question targeting your gap.
+- **📈 Creative 2-Graph Interactive Analytics**:
+  - **📉 Top Topics Needing Practice**: Horizontal priority bar chart ranking your primary skill gaps.
+  - **🍰 Solved Problems by Difficulty**: Clean donut chart visualizing your Easy, Medium, and Hard solve ratio.
+- **⚡ Sub-Second Startup Caching**: Pre-fetches and caches 3,900+ problem catalog items at startup for instant sub-second recommendation responses.
+- **🔄 Resilient GraphQL Pipeline**: Built with custom `User-Agent` headers and exponential backoff policies to bypass rate limits (HTTP 429).
+- **🔒 Async Telemetry Logging**: Asynchronously logs user activity and stats to Supabase using FastAPI `BackgroundTasks`.
 
 ---
 
-##  System Architecture
-
-```
-##  System Architecture
+## 🏗️ System Architecture
 
 ```
 problem-recommender-system/
-├── backend/                  # Backend Service & Machine Learning Layer
+├── backend/                  # Machine Learning & Backend API Layer
 │   ├── api/
-│   │   ├── main.py           # FastAPI Entry Point (loads 3,900+ problems catalog at startup)
-│   │   ├── routes.py         # HTTP Endpoints (/recommend, /stats, /subscribe, /update)
-│   │   ├── newsletter.py     # Newsletter subscription handler & SMTP dispatcher
-│   │   ├── tracker.py        # Database interface logging user activity to Supabase
-│   │   ├── schemas.py        # Pydantic validation & response models
-│   │   └── user_pipeline.py  # ETL Orchestration + 10-minute local TTL caching
+│   │   ├── main.py           # FastAPI Entrypoint & Web Route Orchestrator
+│   │   ├── routes.py         # REST API Routes (/recommend, /stats, /update)
+│   │   ├── tracker.py        # Supabase Activity Telemetry Interface
+│   │   ├── schemas.py        # Pydantic Schemas & Data Contracts
+│   │   ├── ui_html.py        # Single-Page Interactive Web Application Template
+│   │   └── user_pipeline.py  # Scrape → Analyze → Rank ETL Orchestration
 │   ├── scraper/
-│   │   ├── fetch_profile.py  # LeetCode GraphQL Client (with retry backoff)
-│   │   ├── parse_submissions.py # Raw JSON parser and tag mapper
-│   │   └── tag_analyzer.py   # Core weakness calculation calculations
+│   │   ├── fetch_profile.py  # Resilient LeetCode GraphQL Client
+│   │   ├── parse_submissions.py # Raw Submission Parser & Tag Mapper
+│   │   └── tag_analyzer.py   # Tag Weakness Matrix Calculations
 │   ├── model/
-│   │   ├── weakness_scorer.py# Ranks problems based on tag scores
-│   │   ├── problem_ranker.py # Ranks unsolved problems
-│   │   └── model.pkl         # Machine learning model artifact
-│   ├── data/
-│   │   ├── problems_catalog.json # Cached global problems catalog (3,900+ problems)
-│   │   ├── subscribers.json  # Saved email subscribers dataset
-│   │   └── database_schema.sql # Supabase SQL schema
-│   └── config.py             # Environment configurations loader
+│   │   ├── weakness_scorer.py# Algorithmic Weakness Scoring Engine
+│   │   ├── problem_ranker.py # Catalog Ranking & Overlap Engine
+│   │   └── model.pkl         # Trained Machine Learning Model Artifact
+│   └── data/
+│       └── problems_catalog.json # 3,900+ Pre-cached Catalog Problems
 │
-├── frontend/                 # Frontend Web Application Layer
-│   ├── dashboard.py          # Streamlit organic sage & forest green UI application
+├── frontend/                 # Streamlit Web Application Layer
+│   ├── dashboard.py          # Streamlit Organic Forest Green UI Entrypoint
 │   └── ui/
-│       ├── analytics.py      # Plotly interactive charts & data visualization
-│       ├── client.py         # Fast sub-second @st.cache_data API client
-│       ├── components.py     # Nav bar, hero section, process cards & stat cards
-│       ├── recommendations.py# Recommendation problem cards & detail panels
-│       └── styles.py         # Custom typography & design system stylesheet
+│       ├── analytics.py      # 2-Graph Plotly Interactive Visualization
+│       ├── client.py         # Cached API Client Interface
+│       ├── components.py     # Header, Hero, Process Cards & Stat Cards
+│       ├── recommendations.py# Target Recommendation Card & Detail Panel
+│       └── styles.py         # Custom CSS Design System & Typography
 │
 ├── tests/                    # Pytest Integration & Unit Test Suite
-├── Dockerfile                # Container deployment build spec
-├── docker-compose.yml        # Docker composition setup
-├── render.yaml               # Render cloud deployment specification
-├── requirements.txt          # Pinned Python dependencies
-└── .env                      # Local environment secrets
+├── vercel.json               # Vercel Serverless Deployment Config
+├── pyproject.toml            # Project Build & Vercel Entrypoint Spec
+├── render.yaml               # Render Cloud Blueprint Specification
+├── Dockerfile                # Docker Container Build Specification
+└── requirements.txt          # Pinned Python Dependencies
 ```
 
-### Request Flow Diagram
+### Request Execution Flow
 ```
-User types LeetCode username on Streamlit Web App
-                       ↓
-         Streamlit sends HTTP Request
-         GET /recommend?username=username
-                       ↓
-        FastAPI checks local TTL Cache
-        ├── Hit?  → Return cached JSON instantly (< 10ms)
-        └── Miss? 
-             ├── Fetch profile from LeetCode GraphQL API
-             │   (Resilient retries / User-Agent headers)
-             ├── Compute tag weakness scores (0.0 - 1.0)
-             ├── Rank 3,900+ problems by weakness overlap
-             ├── Cache result for 10 minutes in memory
-             ├── Start async background logging task (Supabase)
-             ↓
-         Return recommendations response
+User Enters LeetCode Username
+             │
+             ▼
+FastAPI Request Handler (`/recommend?username=...`)
+             │
+     ┌───────┴───────┐
+     │  Cache Hit?   │ ── Yes ──> Return Cached Recommendations (< 10ms)
+     └───────┬───────┘
+             │ No
+             ▼
+ 1. Fetch Profile via LeetCode GraphQL API (Resilient Retries)
+ 2. Calculate Tag Weakness Coefficients (0.0 to 1.0)
+ 3. Rank 3,900+ Catalog Problems by Overlap
+ 4. Store Result in TTL Memory Cache (10 min)
+ 5. Dispatch Async Telemetry Logging Task (Supabase)
+             │
+             ▼
+ Return Ranked Recommendations & Analytics JSON / UI
 ```
 
 ---
 
-##  Mathematical Model
+## 🧮 Mathematical Scoring Model
 
-### 1. Tag Weakness Scoring
-The system measures a user's relative weakness in a particular topic (tag) using this formula:
+### 1. Tag Weakness Score
+The system measures relative skill gap in a given topic using:
 
 $$\text{Strength Score}_{\text{tag}} = \frac{\text{Solved Count}_{\text{tag}}}{\max(\text{Solved Counts across all tags})}$$
 
-$$\text{Weakness Score}_{\text{tag}} = 1 - \text{Strength Score}_{\text{tag}}$$
+$$\text{Weakness Score}_{\text{tag}} = 1.0 - \text{Strength Score}_{\text{tag}}$$
 
-* *A weakness score of `0.0` represents your most practiced topic.*
-* *A weakness score of `1.0` represents a topic you have never solved.*
+* $\text{Weakness Score} = 0.0$ $\rightarrow$ Most practiced algorithmic domain.
+* $\text{Weakness Score} = 1.0$ $\rightarrow$ Unpracticed algorithmic domain.
 
-### 2. Problem Weakness Score
-To score an unsolved problem, the system averages the weakness scores of all the tags associated with that problem:
+### 2. Problem Weakness Overlap
+Unsolved catalog problems are scored by computing the mean weakness across all associated tags:
 
-$$\text{Problem Score} = \frac{\sum_{i=1}^{n} \text{Weakness Score}_{\text{tag}_i}}{n}$$
+$$\text{Problem Score} = \frac{1}{n} \sum_{i=1}^{n} \text{Weakness Score}_{\text{tag}_i}$$
 
-All unsolved problems are ranked in descending order of this score. The top results target your absolute largest skill gaps.
-
----
-
-##  API Reference
-
-All routes accept `?username=<leetcode_username>`. If omitted, they fall back to the default `LEETCODE_USERNAME` in `.env`.
-
-| Method | Endpoint | Headers | Description |
-|--------|----------|---------|-------------|
-| `GET` | `/` | None | API metadata and usage stats |
-| `GET` | `/recommend` | None | Top recommendation (any difficulty) |
-| `GET` | `/recommend/easy` | None | Top Easy recommendation |
-| `GET` | `/recommend/medium` | None | Top Medium recommendation |
-| `GET` | `/recommend/hard` | None | Top Hard recommendation |
-| `GET` | `/stats` | None | User solved counts, totals, and tag scores |
-| `POST` | `/subscribe` | None | Registers email newsletter subscription |
-| `POST` | `/update` | None | Purges cache and forces profile re-scrape |
-| `POST` | `/admin/refresh-catalog` | `X-Admin-Secret` | Triggers background global problem catalog refresh |
-| `GET` | `/admin/users` | `X-Admin-Secret` | Returns logged statistics for all users |
+Problems are ranked in descending order of this score to surface the most impactful challenge.
 
 ---
 
-##  Running Locally
+## 📡 API Reference
 
-### Prerequisites
-* Python 3.11+
-* A LeetCode account & session cookie
+All endpoints accept an optional query parameter `?username=<leetcode_username>`.
 
-### 1. Setup Virtual Environment
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/` | Renders Single-Page Interactive Web Application |
+| `GET` | `/recommend` | Top overall recommended problem |
+| `GET` | `/recommend/easy` | Top Easy recommended problem |
+| `GET` | `/recommend/medium` | Top Medium recommended problem |
+| `GET` | `/recommend/hard` | Top Hard recommended problem |
+| `GET` | `/stats` | User solved counts, percentages, and topic scores |
+| `POST` | `/update` | Purges cache and forces fresh profile scrape |
+| `POST` | `/admin/refresh-catalog` | Triggers background global problem catalog update (`X-Admin-Secret`) |
+| `GET` | `/admin/users` | Fetches logged user telemetry (`X-Admin-Secret`) |
+
+---
+
+## 💻 Local Development Setup
+
+### 1. Clone & Setup Virtual Environment
 ```bash
-git clone https://github.com/Reena1912/leetcode-recommender.git
-cd leetcode-recommender
+git clone https://github.com/Reena1912/problem-recommender.git
+cd problem-recommender
 python -m venv venv
-venv\Scripts\activate
+.\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure Credentials
-1. Log into [leetcode.com](https://leetcode.com).
-2. Open Browser DevTools (`F12` or `Ctrl+Shift+I`) -> **Application** -> **Cookies** -> `https://leetcode.com`.
-3. Copy the value of the **`LEETCODE_SESSION`** cookie.
-4. Create a `.env` file in the project root:
-   ```env
-   LEETCODE_SESSION=your_leetcode_session_cookie
-   LEETCODE_USERNAME=your_leetcode_username
-   SUPABASE_URL=your_supabase_project_url
-   SUPABASE_SERVICE_KEY=your_supabase_anon_key
-   ADMIN_SECRET=your_admin_secret_string
-   ```
-
-### 3. Run the Services
-**Terminal 1 (Backend API)**:
-```bash
-python -m uvicorn backend.api.main:app --reload
-```
-*(On the first run, the API will take ~30 seconds to download and cache the global 3,900+ problem catalog from LeetCode).*
-
-**Terminal 2 (Streamlit Frontend Dashboard)**:
-```bash
-python -m streamlit run frontend/dashboard.py
+### 2. Configure Environment Variables
+Create a `.env` file in the root directory:
+```env
+LEETCODE_SESSION=your_session_cookie
+LEETCODE_USERNAME=your_leetcode_username
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_KEY=your_supabase_key
+ADMIN_SECRET=your_admin_secret
 ```
 
+### 3. Launch Local Servers
 
+**Backend API**:
+```bash
+python -m uvicorn backend.api.main:app --reload --port 8000
+```
+
+**Streamlit Dashboard**:
+```bash
+python -m streamlit run frontend/dashboard.py --server.port 8501
+```
+
+---
+
+## 🚀 Deployment
+
+### Vercel Serverless
+1. Import repository on [Vercel](https://vercel.com/new).
+2. Framework Preset: **Other**.
+3. Deploy! Vercel automatically detects `pyproject.toml` and builds the serverless deployment.
+
+### Render Cloud
+1. Create a new **Blueprint** on [Render](https://dashboard.render.com).
+2. Connect your repository — Render will automatically launch both `algomatch-api` and `algomatch-dashboard` using `render.yaml`.
 
 ---
 
 <div align="center">
-  <sub>Built with ⚡ · LeetCode GraphQL API · Weakness-Score Ranking · Production Optimized</sub>
+  <sub>Built with ⚡ · LeetCode GraphQL API · Machine Learning Weakness Ranking Engine</sub>
 </div>
