@@ -411,7 +411,7 @@ HTML_UI_CONTENT = """<!DOCTYPE html>
             <div class="lc-search-title">Analyze Any LeetCode Profile</div>
             <div class="lc-search-sub">Enter a username below to calculate weakness scores across 40+ algorithmic topics.</div>
             <form class="lc-search-form" id="search-form">
-                <input type="text" id="username-input" class="lc-search-input" placeholder="e.g. neetcode, tourist, or NovaAsher…" value="neetcode">
+                <input type="text" id="username-input" class="lc-search-input" placeholder="e.g. neetcode, tourist, or NovaAsher…" value="">
                 <button type="submit" class="lc-search-btn">Analyze Profile →</button>
             </form>
         </div>
@@ -665,8 +665,9 @@ HTML_UI_CONTENT = """<!DOCTYPE html>
             });
         });
 
-        // Initial Load
-        fetchUserData('neetcode');
+        // Initial State Prompt
+        document.getElementById('recommendations-container').innerHTML = 
+            '<div style="text-align:center;padding:3.5rem 1.5rem;background:#ffffff;border:1px solid #e4ebe6;border-radius:20px;color:var(--text-muted);font-weight:600;font-size:1.05rem;">👋 Enter any LeetCode username above and click <b style="color:var(--forest-green);">Analyze Profile →</b> to calculate weakness scores and view recommendations!</div>';
     </script>
 </body>
 </html>
