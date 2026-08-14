@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ AlgoMatch — Algorithmic Skill Optimizer
+# AlgoMatch — Algorithmic Skill Optimizer
 
 **Stop grinding blindly. Target your exact skill gaps.**
 
@@ -15,26 +15,51 @@ An intelligent, data-driven platform that analyzes any LeetCode profile, pinpoin
 
 <br/>
 
-[🌐 Live Web Platform](https://problem-recommender.vercel.app) &nbsp;•&nbsp; [⚡ Streamlit Dashboard](http://localhost:8501) &nbsp;•&nbsp; [📖 Interactive API Docs](https://problem-recommender.vercel.app/docs)
+[Live Web Platform](https://problem-recommender.vercel.app) &nbsp;•&nbsp; [Streamlit Dashboard](http://localhost:8501) &nbsp;•&nbsp; [Interactive API Docs](https://problem-recommender.vercel.app/docs)
 
 </div>
 
 ---
 
-## 🎯 Key Features
+## About The Platform
 
-- **📊 Data-Driven Weakness Scoring**: Calculates a normalized weakness coefficient ($0.0 \rightarrow 1.0$) for 40+ algorithmic topics relative to your top strengths.
-- **🎯 Precision Problem Ranking**: Ranks 3,900+ LeetCode problems in real time and surfaces the highest-value Easy, Medium, or Hard question targeting your gap.
-- **📈 Creative 2-Graph Interactive Analytics**:
-  - **📉 Top Topics Needing Practice**: Horizontal priority bar chart ranking your primary skill gaps.
-  - **🍰 Solved Problems by Difficulty**: Clean donut chart visualizing your Easy, Medium, and Hard solve ratio.
-- **⚡ Sub-Second Startup Caching**: Pre-fetches and caches 3,900+ problem catalog items at startup for instant sub-second recommendation responses.
-- **🔄 Resilient GraphQL Pipeline**: Built with custom `User-Agent` headers and exponential backoff policies to bypass rate limits (HTTP 429).
-- **🔒 Async Telemetry Logging**: Asynchronously logs user activity and stats to Supabase using FastAPI `BackgroundTasks`.
+AlgoMatch is an intelligent algorithmic skill optimization engine designed for software engineers and competitive programmers preparing for technical coding interviews. 
+
+Standard interview preparation platforms often lead candidates to practice problems randomly or focus repeatedly on topics they are already comfortable with. AlgoMatch solves this inefficiency by replacing blind problem grinding with data-driven skill targeting.
+
+When a user inputs any public LeetCode username, AlgoMatch automatically executes a multi-stage data processing pipeline:
+
+1. **Real-time Profile Data Ingestion**: Communicates directly with LeetCode's GraphQL API to extract the user's complete problem-solving history, including total solved counts, difficulty breakdown (Easy, Medium, Hard), and distribution across 40+ algorithmic topic tags (such as Dynamic Programming, Graphs, Tries, Binary Search, and Segment Trees).
+2. **Normalized Tag Weakness Calculation**: Evaluates relative proficiency across all algorithmic domains. The engine calculates a normalized strength score for each topic relative to the user's most practiced domain, then derives a mathematical weakness coefficient ranging from 0.0 (maximum strength) to 1.0 (unpracticed skill gap).
+3. **Precision Catalog Overlap Ranking**: Evaluates a pre-cached catalog of over 3,900 LeetCode problems against the user's specific weakness profile. The algorithm computes a composite weakness match score for every unsolved problem, surfacing the single most impactful question guaranteed to address the user's largest algorithmic gaps.
+4. **Interactive Analytics & Recommendation Visualizations**: Presents real-time skill analytics through horizontal priority bars and difficulty distribution donut charts, accompanied by curated problem recommendation cards featuring direct links to solve each challenge on LeetCode.
 
 ---
 
-## 🏗️ System Architecture
+## Detailed Functional Breakdown
+
+### 1. Profile Analysis and Data Extraction
+- Scrapes live profile metrics directly from LeetCode's GraphQL backend endpoints.
+- Implements exponential backoff retries and HTTP headers to handle rate-limiting.
+- Categorizes solved problem metrics across Easy, Medium, and Hard difficulties.
+
+### 2. Algorithmic Weakness Engine
+- Computes tag frequency distribution across all solved problems.
+- Normalizes topic coverage to identify disproportionately neglected algorithmic patterns.
+- Identifies primary skill gaps (such as Iterator, Data Stream, Game Theory, and Trie) and ranks practice priority.
+
+### 3. Problem Recommendation Engine
+- Filters out problems already solved by the candidate.
+- Computes an aggregate weakness match score (0 to 100) for remaining unsolved catalog problems.
+- Provides difficulty-filtered recommendations (All, Easy, Medium, Hard) to allow candidates to practice at their target difficulty level.
+
+### 4. Dual Web Interfaces
+- **Single-Page Web Platform**: High-performance HTML/CSS/JS frontend served natively via FastAPI for instant response times on cloud serverless infrastructure (Vercel).
+- **Streamlit Analytics Dashboard**: Data application featuring Plotly interactive data visualizations, customizable metrics, and detailed problem inspection panels.
+
+---
+
+## System Structure
 
 ```
 problem-recommender-system/
@@ -55,12 +80,12 @@ problem-recommender-system/
 │   │   ├── problem_ranker.py # Catalog Ranking & Overlap Engine
 │   │   └── model.pkl         # Trained Machine Learning Model Artifact
 │   └── data/
-│       └── problems_catalog.json # 3,900+ Pre-cached Catalog Problems
+│       └── problems_catalog.json # Pre-cached Catalog Problems
 │
 ├── frontend/                 # Streamlit Web Application Layer
 │   ├── dashboard.py          # Streamlit Organic Forest Green UI Entrypoint
 │   └── ui/
-│       ├── analytics.py      # 2-Graph Plotly Interactive Visualization
+│       ├── analytics.py      # Plotly Interactive Visualization
 │       ├── client.py         # Cached API Client Interface
 │       ├── components.py     # Header, Hero, Process Cards & Stat Cards
 │       ├── recommendations.py# Target Recommendation Card & Detail Panel
@@ -74,31 +99,9 @@ problem-recommender-system/
 └── requirements.txt          # Pinned Python Dependencies
 ```
 
-### Request Execution Flow
-```
-User Enters LeetCode Username
-             │
-             ▼
-FastAPI Request Handler (`/recommend?username=...`)
-             │
-     ┌───────┴───────┐
-     │  Cache Hit?   │ ── Yes ──> Return Cached Recommendations (< 10ms)
-     └───────┬───────┘
-             │ No
-             ▼
- 1. Fetch Profile via LeetCode GraphQL API (Resilient Retries)
- 2. Calculate Tag Weakness Coefficients (0.0 to 1.0)
- 3. Rank 3,900+ Catalog Problems by Overlap
- 4. Store Result in TTL Memory Cache (10 min)
- 5. Dispatch Async Telemetry Logging Task (Supabase)
-             │
-             ▼
- Return Ranked Recommendations & Analytics JSON / UI
-```
-
 ---
 
-## 🧮 Mathematical Scoring Model
+## Mathematical Scoring Model
 
 ### 1. Tag Weakness Score
 The system measures relative skill gap in a given topic using:
@@ -107,8 +110,8 @@ $$\text{Strength Score}_{\text{tag}} = \frac{\text{Solved Count}_{\text{tag}}}{\
 
 $$\text{Weakness Score}_{\text{tag}} = 1.0 - \text{Strength Score}_{\text{tag}}$$
 
-* $\text{Weakness Score} = 0.0$ $\rightarrow$ Most practiced algorithmic domain.
-* $\text{Weakness Score} = 1.0$ $\rightarrow$ Unpracticed algorithmic domain.
+- A weakness score of 0.0 represents the user's most practiced algorithmic domain.
+- A weakness score of 1.0 represents an unpracticed algorithmic domain.
 
 ### 2. Problem Weakness Overlap
 Unsolved catalog problems are scored by computing the mean weakness across all associated tags:
@@ -119,27 +122,27 @@ Problems are ranked in descending order of this score to surface the most impact
 
 ---
 
-## 📡 API Reference
+## API Reference
 
 All endpoints accept an optional query parameter `?username=<leetcode_username>`.
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/` | Renders Single-Page Interactive Web Application |
-| `GET` | `/recommend` | Top overall recommended problem |
-| `GET` | `/recommend/easy` | Top Easy recommended problem |
-| `GET` | `/recommend/medium` | Top Medium recommended problem |
-| `GET` | `/recommend/hard` | Top Hard recommended problem |
-| `GET` | `/stats` | User solved counts, percentages, and topic scores |
-| `POST` | `/update` | Purges cache and forces fresh profile scrape |
-| `POST` | `/admin/refresh-catalog` | Triggers background global problem catalog update (`X-Admin-Secret`) |
-| `GET` | `/admin/users` | Fetches logged user telemetry (`X-Admin-Secret`) |
+| GET | `/` | Renders Single-Page Interactive Web Application |
+| GET | `/recommend` | Top overall recommended problem |
+| GET | `/recommend/easy` | Top Easy recommended problem |
+| GET | `/recommend/medium` | Top Medium recommended problem |
+| GET | `/recommend/hard` | Top Hard recommended problem |
+| GET | `/stats` | User solved counts, percentages, and topic scores |
+| POST | `/update` | Purges cache and forces fresh profile scrape |
+| POST | `/admin/refresh-catalog` | Triggers background global problem catalog update (`X-Admin-Secret`) |
+| GET | `/admin/users` | Fetches logged user telemetry (`X-Admin-Secret`) |
 
 ---
 
-## 💻 Local Development Setup
+## Local Development Setup
 
-### 1. Clone & Setup Virtual Environment
+### 1. Setup Virtual Environment
 ```bash
 git clone https://github.com/Reena1912/problem-recommender.git
 cd problem-recommender
@@ -172,19 +175,19 @@ python -m streamlit run frontend/dashboard.py --server.port 8501
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
 ### Vercel Serverless
-1. Import repository on [Vercel](https://vercel.com/new).
-2. Framework Preset: **Other**.
+1. Import repository on Vercel.
+2. Framework Preset: Other.
 3. Deploy! Vercel automatically detects `pyproject.toml` and builds the serverless deployment.
 
 ### Render Cloud
-1. Create a new **Blueprint** on [Render](https://dashboard.render.com).
+1. Create a new Blueprint on Render.
 2. Connect your repository — Render will automatically launch both `algomatch-api` and `algomatch-dashboard` using `render.yaml`.
 
 ---
 
 <div align="center">
-  <sub>Built with ⚡ · LeetCode GraphQL API · Machine Learning Weakness Ranking Engine</sub>
+  <sub>Built with LeetCode GraphQL API · Machine Learning Weakness Ranking Engine</sub>
 </div>
